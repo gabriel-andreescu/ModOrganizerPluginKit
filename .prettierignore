@@ -1,0 +1,8 @@
+.venv/
+.xmake/
+build/
+dist/
+scratch/
+uv.lock
+**/*.jinja
+packages/m/mo2-uibase/2.5.3beta12/

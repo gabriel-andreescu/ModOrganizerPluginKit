@@ -1,0 +1,218 @@
+name: Build and release plugin
+
+on:
+  workflow_call:
+    inputs:
+      project-directory:
+        description: Project directory relative to the repository root.
+        default: .
+        type: string
+      mo2-releases:
+        description: JSON array of MO2 releases to build for.
+        default: '["2.5.2", "2.5.3beta12"]'
+        type: string
+      run-tests:
+        description: Run the project's XMake tests before packaging.
+        default: false
+        type: boolean
+      dist-directory:
+        description: ZIP output directory relative to the project.
+        default: build/dist
+        type: string
+      configure-arguments:
+        description: Additional XMake configure arguments, one per line.
+        default: ""
+        type: string
+      publish-nexus:
+        description:
+          Upload configured packages to Nexus Mods after the GitHub release.
+        default: false
+        type: boolean
+    secrets:
+      NEXUSMODS_API_KEY:
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@45c121f982720f3bdf236c2ac06f126ca211949c
+        if: hashFiles('.pre-commit-config.yaml') != ''
+        with:
+          version: "0.12.13"
+          enable-cache: true
+
+      - name: Cache pre-commit environments
+        if: hashFiles('.pre-commit-config.yaml') != ''
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key:
+            pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml')
+            }}
+
+      - name: Lint and format
+        if: hashFiles('.pre-commit-config.yaml') != ''
+        run:
+          uvx --from pre-commit==4.6.2 pre-commit run --all-files
+          --show-diff-on-failure
+
+  build:
+    needs: checks
+    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        mo2: ${{ fromJSON(inputs.mo2-releases) }}
+    env:
+      XMAKE_ACTION_BUILD_CACHE: "true"
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: core.longpaths
+      GIT_CONFIG_VALUE_0: "true"
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: ${{ inputs.project-directory }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: xmake-io/github-action-setup-xmake@3a1a5dddfc7fa625d9a698738334bf55655a861a
+        with:
+          xmake-version: "3.1.1"
+          actions-cache-folder: .xmake-install
+
+      - name: Fix XMake MSVC precompiled header caching
+        run: |
+          xmake lua -c '
+            local file = path.join(os.programdir(), "modules/core/tools/cl.lua")
+            local source = io.readfile(file)
+            local old = "if objectfile:endswith(\".pch\") then"
+            local replacement = "if objectfile:endswith(\".pch\") or objectfile:endswith(\".pch.obj\") then"
+            if not source:find(replacement, 1, true) then
+              assert(source:find(old, 1, true), "Unexpected XMake MSVC PCH check")
+              local patched = source:replace(old, replacement, {plain = true})
+              io.writefile(file, patched)
+            end'
+
+      - name: Set XMake cache directories
+        id: image
+        env:
+          MOPK_CONFIGURE_ARGUMENTS: ${{ inputs.configure-arguments }}
+        run: |
+          "version=$env:ImageVersion" >> $env:GITHUB_OUTPUT
+          $project = [Text.Encoding]::UTF8.GetBytes((Get-Location).Path)
+          "project=$([Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($project)).Substring(0, 16))" >> $env:GITHUB_OUTPUT
+          $arguments = [Text.Encoding]::UTF8.GetBytes([string]$env:MOPK_CONFIGURE_ARGUMENTS)
+          "configuration=$([Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($arguments)).Substring(0, 16))" >> $env:GITHUB_OUTPUT
+          "XMAKE_GLOBALDIR=$env:RUNNER_TEMP/mopk/global" >> $env:GITHUB_ENV
+          "XMAKE_PKG_INSTALLDIR=$env:RUNNER_TEMP/mopk/packages" >> $env:GITHUB_ENV
+          "XMAKE_PKG_CACHEDIR=$env:RUNNER_TEMP/mopk/downloads" >> $env:GITHUB_ENV
+
+      - name: Cache XMake repositories and downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ env.XMAKE_GLOBALDIR }}
+            ${{ env.XMAKE_PKG_CACHEDIR }}
+          key:
+            xmake-3.1.1-${{ runner.os }}-plugin-${{ steps.image.outputs.project
+            }}-downloads-${{ github.sha }}
+          restore-keys:
+            xmake-3.1.1-${{ runner.os }}-plugin-${{ steps.image.outputs.project
+            }}-downloads-
+
+      - name: Cache installed dependencies
+        id: dependencies
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.XMAKE_PKG_INSTALLDIR }}
+          key:
+            xmake-3.1.1-${{ runner.os }}-plugin-${{ steps.image.outputs.project
+            }}-msvc-${{ steps.image.outputs.version }}-mo2-${{ matrix.mo2 }}-${{
+            steps.image.outputs.configuration }}-${{
+            hashFiles(format('{0}/xmake-requires.lock',
+            inputs.project-directory)) != '' &&
+            hashFiles(format('{0}/**/xmake-*.lock', inputs.project-directory),
+            format('{0}/packages/**', inputs.project-directory)) ||
+            hashFiles(format('{0}/**/xmake.lua', inputs.project-directory),
+            format('{0}/**/xmake-*.lock', inputs.project-directory),
+            format('{0}/packages/**', inputs.project-directory)) }}
+
+      - name: Cache compilation
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/mopk/compilation
+          key:
+            xmake-3.1.1-${{ runner.os }}-plugin-${{ steps.image.outputs.project
+            }}-msvc-objects-${{ steps.image.outputs.version }}-mo2-${{
+            matrix.mo2 }}-${{ github.sha }}
+          restore-keys:
+            xmake-3.1.1-${{ runner.os }}-plugin-${{ steps.image.outputs.project
+            }}-msvc-objects-${{ steps.image.outputs.version }}-mo2-${{
+            matrix.mo2 }}-
+
+      - name: Configure
+        env:
+          MOPK_MO2_RELEASE: ${{ matrix.mo2 }}
+          MOPK_DIST_DIRECTORY: ${{ inputs.dist-directory }}
+          MOPK_CONFIGURE_ARGUMENTS: ${{ inputs.configure-arguments }}
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $arguments = @($env:MOPK_CONFIGURE_ARGUMENTS -split "`r?`n" | Where-Object { $_.Trim() })
+          xmake f -y -a x64 -m releasedbg --toolchain=msvc --mo2="$env:MOPK_MO2_RELEASE" --deploy=n --distdir="$env:MOPK_DIST_DIRECTORY" --policies=build.ccache --ccachedir="$env:RUNNER_TEMP/mopk/compilation" @arguments
+
+      - name: Save installed dependencies
+        if: steps.dependencies.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.XMAKE_PKG_INSTALLDIR }}
+          key: ${{ steps.dependencies.outputs.cache-primary-key }}
+
+      - name: Build
+        run: xmake -y
+
+      - name: Test
+        if: inputs.run-tests
+        run: xmake test
+
+      - name: Package
+        run: xmake package -y
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: packages-${{ matrix.mo2 }}
+          path:
+            ${{ inputs.project-directory }}/${{ inputs.dist-directory
+            }}/**/*.zip
+          if-no-files-found: error
+          compression-level: 0
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: package-metadata-${{ matrix.mo2 }}
+          path: ${{ inputs.project-directory }}/.xmake/mopk/packages/*.json
+          include-hidden-files: true
+          if-no-files-found: error
+
+  release:
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    needs: build
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release.yml
+    with:
+      project-directory: ${{ inputs.project-directory }}
+      artifacts: packages-*
+      metadata: package-metadata-*
+      publish-nexus: ${{ inputs.publish-nexus }}
+    secrets:
+      NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}

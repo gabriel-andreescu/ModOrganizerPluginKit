@@ -1,0 +1,256 @@
+name: Publish Nexus files
+
+on:
+  workflow_call:
+    inputs:
+      project-directory:
+        default: .
+        type: string
+      artifacts:
+        default: packages-*
+        type: string
+      metadata:
+        default: package-metadata-*
+        type: string
+    secrets:
+      NEXUSMODS_API_KEY:
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nexus-publication
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      files: ${{ steps.plan.outputs.files }}
+      changelogs: ${{ steps.plan.outputs.changelogs }}
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: ${{ inputs.metadata }}
+          path: package-metadata
+          merge-multiple: true
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: release-notes-*
+          path: release-notes
+          merge-multiple: true
+
+      - name: Plan Nexus publication
+        id: plan
+        shell: python
+        env:
+          PROJECT_DIRECTORY: ${{ inputs.project-directory }}
+        run: |
+          import json
+          import os
+          import posixpath
+          from html.parser import HTMLParser
+          from pathlib import Path, PurePosixPath
+
+          class Entries(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.entries = []
+                  self.text = []
+                  self.section = ""
+                  self.heading = False
+                  self.link = None
+
+              def handle_starttag(self, tag, attrs):
+                  if tag in {"h1", "h2", "h3", "h4", "h5", "h6"}:
+                      self.heading = True
+                  if tag == "a":
+                      self.link = dict(attrs).get("href")
+                  if tag == "br":
+                      self.text.append(" ")
+
+              def handle_data(self, data):
+                  self.text.append(data)
+
+              def handle_endtag(self, tag):
+                  if tag == "a" and self.link:
+                      if self.link not in "".join(self.text):
+                          self.text.append(f" ({self.link})")
+                      self.link = None
+                  if tag in {"h1", "h2", "h3", "h4", "h5", "h6", "p", "li", "pre"}:
+                      text = " ".join("".join(self.text).split())
+                      self.text = []
+                      if self.heading:
+                          self.section = text
+                          self.heading = False
+                      elif text:
+                          self.entries.append(f"{self.section}: {text}" if self.section else text)
+
+          def plan(packages, notes, project):
+              files, groups, destinations, primary = [], {}, set(), set()
+              for package in sorted(packages, key=lambda item: item["target"]):
+                  nexus = package.get("nexus")
+                  if not nexus:
+                      continue
+                  mod_id, file_id = str(nexus["mod_id"]), str(nexus["file_id"])
+                  if not mod_id.isdecimal() or not file_id.isdecimal():
+                      raise ValueError(f"{package['target']}: Nexus IDs must be decimal strings")
+                  category = nexus["category"]
+                  if category not in {"main", "optional", "miscellaneous"}:
+                      raise ValueError(f"{package['target']}: invalid Nexus category {category!r}")
+                  domain = nexus.get("game")
+                  if not isinstance(domain, str) or not domain.isalnum() or not domain.islower():
+                      raise ValueError(f"{package['target']}: Nexus game must be a game domain name")
+                  if file_id in destinations:
+                      raise ValueError(f"Multiple packages target Nexus file {file_id}")
+                  destinations.add(file_id)
+                  is_primary = nexus.get("primary", False)
+                  if not isinstance(is_primary, bool):
+                      raise ValueError("Nexus primary must be a boolean")
+                  if is_primary:
+                      if category != "main" or mod_id in primary:
+                          raise ValueError("Each Nexus mod can have only one primary Main package")
+                      primary.add(mod_id)
+                  archive = PurePosixPath(package["archive"])
+                  if archive.is_absolute() or ".." in archive.parts:
+                      raise ValueError(f"Invalid package archive path: {archive}")
+                  files.append({
+                      "file_id": file_id, "mod_id": mod_id, "domain": domain,
+                      "version": package["version"], "archive": str(archive),
+                      "name": nexus.get("display_name", package["name"]),
+                      "description": nexus.get("description", ""),
+                      "category": category, "primary": is_primary,
+                  })
+                  if package.get("changelog"):
+                      path = posixpath.normpath(posixpath.join(project, package["changelog"]))
+                      note = next(item for item in notes.values()
+                                  if posixpath.normpath(item["path"]) == path
+                                  and item["version"] == package["version"])
+                  else:
+                      note = notes["0000"]
+                  key = (mod_id, note["version"])
+                  group = groups.setdefault(key, {
+                      "mod_id": mod_id, "version": note["version"],
+                      "domain": domain, "page_id": str(int(mod_id) & 0xffffffff),
+                      "entries": [],
+                  })
+                  parser = Entries()
+                  parser.feed(note["html"])
+                  if not parser.entries:
+                      raise ValueError(f"{package['target']}: changelog has no entries")
+                  for entry in parser.entries:
+                      if entry not in group["entries"]:
+                          group["entries"].append(entry)
+              if not files:
+                  raise ValueError("Nexus publication is enabled but no packages declare a Nexus destination")
+              return files, list(groups.values())
+
+          if __name__ == "__main__":
+              packages = [json.loads(path.read_text(encoding="utf-8-sig"))
+                          for path in Path("package-metadata").glob("*.json")]
+              notes = {path.stem: json.loads(path.read_text(encoding="utf-8-sig"))
+                       for path in Path("release-notes").glob("*.json")}
+              files, changelogs = plan(packages, notes, os.environ["PROJECT_DIRECTORY"])
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+                  print("files=" + json.dumps(files), file=output)
+                  print("changelogs=" + json.dumps(changelogs), file=output)
+
+  upload:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        file: ${{ fromJSON(needs.prepare.outputs.files) }}
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: ${{ inputs.artifacts }}
+          path: packages
+          merge-multiple: true
+
+      - name: Check Nexus file
+        id: existing
+        shell: python
+        env:
+          NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
+          NEXUS_FILE: ${{ toJSON(matrix.file) }}
+        run: |
+          import json
+          import os
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+
+          file = json.loads(os.environ["NEXUS_FILE"])
+          if not Path("packages", file["archive"]).is_file():
+              raise FileNotFoundError(file["archive"])
+          def get(path):
+              request = Request("https://api.nexusmods.com/" + path,
+                                headers={"apikey": os.environ["NEXUSMODS_API_KEY"]})
+              with urlopen(request, timeout=30) as response:
+                  return json.load(response)
+          game = get(f"v1/games/{file['domain']}.json")
+          if int(file["mod_id"]) >> 32 != game["id"]:
+              raise ValueError(f"Mod {file['mod_id']} does not belong to {file['domain']}")
+          files = get(f"v3/mods/{file['mod_id']}/files")["data"]["mod_files"]
+          if not any(item["id"] == file["file_id"] for item in files):
+              raise ValueError(f"File {file['file_id']} does not belong to mod {file['mod_id']}")
+          versions = get(f"v3/mod-files/{file['file_id']}/versions")["data"]["versions"]
+          exists = any(item["version"] == file["version"] for item in versions)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              print(f"exists={str(exists).lower()}", file=output)
+          print(f"{file['name']} {file['version']}: {'already uploaded' if exists else 'ready to upload'}")
+
+      - name: Upload file
+        if: steps.existing.outputs.exists != 'true'
+        uses: Nexus-Mods/upload-action@c96019556046053aa26044b44396cd38929daf23 # v1.0.0-beta.10
+        with:
+          api_key: ${{ secrets.NEXUSMODS_API_KEY }}
+          file_id: ${{ matrix.file.file_id }}
+          filename: packages/${{ matrix.file.archive }}
+          version: ${{ matrix.file.version }}
+          display_name: ${{ matrix.file.name }}
+          description: ${{ matrix.file.description }}
+          category: ${{ matrix.file.category }}
+          primary_mod_manager_download: ${{ matrix.file.primary }}
+          update_mod_version: ${{ matrix.file.primary }}
+          archive_existing_version: false
+
+  changelog:
+    needs: [prepare, upload]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        changelog: ${{ fromJSON(needs.prepare.outputs.changelogs) }}
+    steps:
+      - name: Publish Nexus changelog
+        shell: python
+        env:
+          NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
+          NEXUS_CHANGELOG: ${{ toJSON(matrix.changelog) }}
+        run: |
+          import html
+          import json
+          import os
+          from urllib.request import Request, urlopen
+
+          changelog = json.loads(os.environ["NEXUS_CHANGELOG"])
+          headers = {"apikey": os.environ["NEXUSMODS_API_KEY"]}
+          url = (f"https://api.nexusmods.com/v1/games/{changelog['domain']}/mods/"
+                 f"{changelog['page_id']}/changelogs.json")
+          with urlopen(Request(url, headers=headers), timeout=30) as response:
+              existing = json.load(response).get(changelog["version"], [])
+          existing = {html.unescape(entry).strip() for entry in existing}
+          missing = [entry for entry in changelog["entries"] if entry not in existing]
+          if missing:
+              body = json.dumps({"version": changelog["version"], "changelog": "\n".join(missing)}).encode()
+              request = Request(f"https://api.nexusmods.com/v3/mods/{changelog['mod_id']}/changelogs",
+                                data=body, headers={**headers, "Content-Type": "application/json"})
+              with urlopen(request, timeout=30) as response:
+                  json.load(response)
+              print(f"Added {len(missing)} changelog entries for {changelog['version']}")
+          else:
+              print(f"Changelog {changelog['version']} is already published")

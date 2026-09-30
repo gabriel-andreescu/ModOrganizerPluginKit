@@ -1,0 +1,7 @@
+rule("integration")
+on_config(function(target)
+    local source = path.join(target:pkg("devbench-api"):installdir(), "share/DevBenchAPI.cpp")
+    local staged = path.join(target:autogendir(), "devbench", "DevBenchAPI.cpp")
+    os.cp(source, staged, { copy_if_different = true })
+    target:add("files", staged)
+end)

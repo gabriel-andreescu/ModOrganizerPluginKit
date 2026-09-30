@@ -1,0 +1,4 @@
+{% set answers = _copier_answers.copy() %}
+{% set _ = answers.pop('deploy_2_5_2', None) %}
+{% set _ = answers.pop('deploy_2_5_3beta12', None) %}
+{{ answers | to_nice_yaml -}}

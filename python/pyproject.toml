@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "modorganizer-plugin-kit"
+version = "0.1.0"
+description = "Development helpers for Mod Organizer 2 plugins"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+dependencies = ["requests>=2.28"]
+
+[project.urls]
+Repository = "https://github.com/gabriel-andreescu/ModOrganizerPluginKit"
+Documentation = "https://github.com/gabriel-andreescu/ModOrganizerPluginKit/blob/main/docs/README.md"
+
+[project.optional-dependencies]
+test = ["pytest>=8.4,<10"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mopk"]

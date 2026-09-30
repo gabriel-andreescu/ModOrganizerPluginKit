@@ -1,0 +1,13 @@
+.xmake/
+.mopk/
+build/
+dist/
+.idea/
+scratch/
+compile_commands.json
+aqtinstall.log
+.venv/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+test-results/

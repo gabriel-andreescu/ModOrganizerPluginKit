@@ -1,0 +1,8 @@
+* text=auto eol=lf
+
+*.dll binary -eol
+*.exe binary -eol
+*.pdb binary -eol
+*.png binary -eol
+*.qm binary -eol
+packages/m/mo2-uibase/2.5.3beta12/include/** -text

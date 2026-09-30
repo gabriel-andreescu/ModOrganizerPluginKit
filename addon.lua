@@ -1,0 +1,5 @@
+addon("mopk")
+set_homepage("https://github.com/gabriel-andreescu/ModOrganizerPluginKit")
+set_description("Build rules for Mod Organizer 2 plugins")
+set_license("MIT")
+set_sourcedir("xmake")

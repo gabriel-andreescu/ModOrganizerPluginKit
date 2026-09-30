@@ -1,0 +1,6 @@
+package("mopk")
+set_kind("addon")
+set_description("Build rules for Mod Organizer 2 plugins")
+set_license("MIT")
+add_urls("https://github.com/gabriel-andreescu/ModOrganizerPluginKit.git")
+add_versions("0.1.0", "v0.1.0")

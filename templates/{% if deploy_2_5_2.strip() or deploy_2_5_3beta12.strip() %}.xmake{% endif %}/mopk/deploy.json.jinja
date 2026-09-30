@@ -1,0 +1,8 @@
+{% set releases = {} %}
+{% for release, answer in [('2.5.2', deploy_2_5_2), ('2.5.3beta12', deploy_2_5_3beta12)] %}
+{% set destinations = answer.split(';') | map('trim') | reject('equalto', '') | list %}
+{% if destinations %}
+{% set _ = releases.update({release: destinations}) %}
+{% endif %}
+{% endfor %}
+{{ {project_name: releases} | to_json(indent=2, ensure_ascii=False) }}

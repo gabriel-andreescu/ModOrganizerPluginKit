@@ -1,0 +1,39 @@
+set_xmakever("3.1.1")
+set_project("{{ project_name }}")
+set_policy("package.requires_lock", true)
+
+local version = "0.1.0"
+
+add_repositories("mopk https://github.com/gabriel-andreescu/ModOrganizerPluginKit.git")
+add_repositories("xmake-luals https://github.com/gabriel-andreescu/xmake-luals.git")
+add_addons("mopk 0.1.0", "xmake-luals 0.1.0")
+includes("@addon/mopk/project", "@addon/mopk/native", "@addon/xmake-luals/luals")
+{% if devbench_api %}
+
+add_requires("devbench-api 0.1.0", { system = false })
+{% endif %}
+
+-- Build targets
+
+target("Plugin", function()
+    set_default(false)
+    set_basename("{{ project_name }}")
+    set_version(version)
+    add_rules("@addon/mopk/plugin")
+    add_files("$(projectdir)/src/**.cpp", "$(projectdir)/src/**.h|PCH.h")
+    add_includedirs("$(projectdir)/src")
+    set_pcxxheader("$(projectdir)/src/PCH.h")
+{% if devbench_api %}
+    add_packages("qt6base", "mo2-uibase", "devbench-api")
+    add_rules("@devbench-api/integration")
+{% else %}
+    add_packages("qt6base", "mo2-uibase")
+{% endif %}
+end)
+
+-- Packages
+
+target("{{ project_name }}", function()
+    set_version(version)
+    add_rules("@addon/mopk/package", { targets = { "Plugin" } })
+end)

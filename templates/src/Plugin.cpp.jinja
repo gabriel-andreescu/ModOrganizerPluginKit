@@ -1,0 +1,25 @@
+#include "Plugin.h"
+
+bool Plugin::init(MOBase::IOrganizer* /*a_organizer*/) {
+    return true;
+}
+
+QString Plugin::name() const {
+    return QStringLiteral({{ project_name | to_json(ensure_ascii=False) }});
+}
+
+QString Plugin::author() const {
+    return QStringLiteral({{ author | to_json(ensure_ascii=False) }});
+}
+
+QString Plugin::description() const {
+    return QStringLiteral({{ description | to_json(ensure_ascii=False) }});
+}
+
+MOBase::VersionInfo Plugin::version() const {
+    return {MOPK_VERSION_MAJOR, MOPK_VERSION_MINOR, MOPK_VERSION_PATCH, MOBase::VersionInfo::RELEASE_FINAL};
+}
+
+QList<MOBase::PluginSetting> Plugin::settings() const {
+    return {};
+}

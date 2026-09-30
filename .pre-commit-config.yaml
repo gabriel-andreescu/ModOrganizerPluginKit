@@ -1,0 +1,29 @@
+exclude: ^(scratch/|build/|dist/|\.venv/|packages/m/mo2-uibase/2\.5\.3beta12/)
+
+repos:
+  - repo: local
+    hooks:
+      - id: prettier
+        name: Prettier
+        language: node
+        entry: prettier --write
+        additional_dependencies: [prettier@3.9.7]
+        types: [text]
+        files: \.(md|ya?ml|jsonc?)$
+      - id: ruff-check
+        name: Ruff check
+        language: system
+        entry: uv run --locked ruff check --fix
+        types_or: [python, pyi]
+      - id: ruff-format
+        name: Ruff format
+        language: system
+        entry: uv run --locked ruff format
+        types_or: [python, pyi]
+      - id: stylua
+        name: StyLua
+        language: node
+        entry: stylua
+        additional_dependencies: ["@johnnymorganz/stylua-bin@2.5.2"]
+        types: [lua]
+        args: [--verify]

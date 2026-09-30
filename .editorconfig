@@ -1,0 +1,25 @@
+root = true
+
+[*]
+end_of_line = lf
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{c,h,cc,cpp,cxx,hpp,hxx,lua,ps1}]
+indent_style = space
+indent_size = 4
+
+[*.{json,jsonc,yaml,yml}]
+indent_style = space
+indent_size = 2
+
+[*.{md,md.jinja}]
+trim_trailing_whitespace = false
+
+[packages/m/mo2-uibase/2.5.3beta12/**]
+indent_style = unset
+indent_size = unset
+end_of_line = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset

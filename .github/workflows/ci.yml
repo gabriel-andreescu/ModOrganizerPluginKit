@@ -1,0 +1,257 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+    tags: ["v[0-9]*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      plugins: ${{ steps.filter.outputs.plugins }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # On pushes, paths-filter fetches the base branch, which needs credentials in a private repository.
+          persist-credentials: true
+
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
+        id: filter
+        if: github.event_name != 'workflow_dispatch' && github.ref_type != 'tag'
+        with:
+          # Pushes compare with the branch's previous commit instead of the default branch.
+          base: ${{ github.ref }}
+          filters: |
+            plugins:
+              - 'addons/**'
+              - 'packages/**'
+              - 'xmake/**'
+              - 'templates/**'
+              - 'copier.yml'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - '.github/workflows/ci.yml'
+
+  workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check workflows
+        run: |
+          curl --fail --location --output "$RUNNER_TEMP/actionlint.tar.gz" \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint"
+
+      - uses: astral-sh/setup-uv@45c121f982720f3bdf236c2ac06f126ca211949c
+        with:
+          version: "0.12.13"
+          python-version: "3.11"
+          enable-cache: true
+
+      - name: Install development dependencies
+        run: uv sync --locked
+
+      - name: Test release scripts
+        run: uv run pytest tests/integration/workflows/test_release.py
+
+      - name: Check release tag type
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          type=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$GITHUB_REF_NAME" --jq .object.type)
+          if [ "$type" != commit ]; then
+            echo "::error::$GITHUB_REF_NAME points to a '$type' object, not a commit. Workflows calling build.yml by an annotated tag cannot find its nested release workflow. Replace it with a lightweight tag on the same commit."
+            exit 1
+          fi
+
+  checks:
+    runs-on: windows-2025
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@45c121f982720f3bdf236c2ac06f126ca211949c
+        with:
+          version: "0.12.13"
+          python-version: "3.11"
+          enable-cache: true
+
+      - uses: xmake-io/github-action-setup-xmake@3a1a5dddfc7fa625d9a698738334bf55655a861a
+        with:
+          xmake-version: "3.1.1"
+          actions-cache-folder: .xmake-install
+
+      - name: Set test cache directory
+        run: |
+          "MOPK_TEST_CACHE=$env:RUNNER_TEMP/mopk/tests" >> $env:GITHUB_ENV
+
+      - name: Install development dependencies
+        run: uv sync --locked
+
+      - name: Cache pre-commit environments
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key:
+            pre-commit-${{ runner.os }}-py311-${{
+            hashFiles('.pre-commit-config.yaml',
+            'templates/*pre-commit-config.yaml*') }}
+
+      - name: Lint and format
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+
+      - name: Check a generated project's formatting
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $project = Join-Path $env:RUNNER_TEMP "sample_plugin"
+          uv run copier copy --defaults --trust --vcs-ref HEAD -d project_name=sample_plugin $env:GITHUB_WORKSPACE $project
+          Set-Location $project
+          git init --quiet
+          git add --all
+          uv run --project $env:GITHUB_WORKSPACE pre-commit run --all-files --show-diff-on-failure
+
+      - name: Unit tests
+        run: uv run pytest --junitxml=build/unit-results.xml
+
+      - name: Integration tests
+        run:
+          uv run pytest tests/integration -n 4
+          --junitxml=build/integration-results.xml
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: test-results
+          path: build/*-results.xml
+
+      - name: Read version
+        id: version
+        if: github.ref_type == 'tag'
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $version = $env:RELEASE_TAG -creplace '^v', ''
+          if (-not (Select-String -Path addons/m/mopk/xmake.lua -SimpleMatch "add_versions(`"$version`", `"v$version`")")) {
+              throw "addons/m/mopk/xmake.lua does not list $version."
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+  plugins:
+    needs: changes
+    if:
+      github.event_name == 'workflow_dispatch' || github.ref_type == 'tag' ||
+      needs.changes.outputs.plugins == 'true'
+    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        mo2: ["2.5.2", "2.5.3beta12"]
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@45c121f982720f3bdf236c2ac06f126ca211949c
+        with:
+          version: "0.12.13"
+          python-version: "3.11"
+          enable-cache: true
+          # The checks job saves the same cache key.
+          save-cache: false
+
+      - uses: xmake-io/github-action-setup-xmake@3a1a5dddfc7fa625d9a698738334bf55655a861a
+        with:
+          xmake-version: "3.1.1"
+          actions-cache-folder: .xmake-install
+
+      - name: Set XMake cache directories
+        id: image
+        run: |
+          "version=$env:ImageVersion" >> $env:GITHUB_OUTPUT
+          "XMAKE_GLOBALDIR=$env:RUNNER_TEMP/mopk/global" >> $env:GITHUB_ENV
+          "XMAKE_PKG_INSTALLDIR=$env:RUNNER_TEMP/mopk/packages" >> $env:GITHUB_ENV
+          "XMAKE_PKG_CACHEDIR=$env:RUNNER_TEMP/mopk/downloads" >> $env:GITHUB_ENV
+
+      - name: Cache installed dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ runner.temp }}/mopk/packages
+            ${{ runner.temp }}/mopk/downloads
+          key:
+            xmake-3.1.1-${{ runner.os }}-plugins-${{ steps.image.outputs.version
+            }}-mo2-${{ matrix.mo2 }}-${{ hashFiles('packages/**',
+            'xmake/includes/**') }}
+
+      - run: uv sync --locked
+
+      - name: Build and package a generated plugin
+        env:
+          MOPK_MO2_RELEASE: ${{ matrix.mo2 }}
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $kit = $PWD.Path.Replace('\', '/')
+          xmake repo --add --global mopk $kit
+          xrepo install --addon -y --debugdir=$kit "mopk 0.1.0"
+          $project = Join-Path $env:RUNNER_TEMP "sample_plugin"
+          uv run copier copy --defaults --trust --vcs-ref HEAD -d project_name=sample_plugin $kit $project
+          Set-Location $project
+          xmake repo --add mopk $kit
+          xmake f -y -a x64 --toolchain=msvc --mo2="$env:MOPK_MO2_RELEASE"
+          xmake -y
+          xmake package -y
+          $zip = "build/dist/sample_plugin/sample_plugin-0.1.0-MO2-$env:MOPK_MO2_RELEASE.zip"
+          $entries = @(tar -tf $zip)
+          if (($entries -join ',') -cne 'sample_plugin.dll,sample_plugin.pdb') {
+              throw "Unexpected package contents: $($entries -join ', ')"
+          }
+          $payload = Join-Path $env:RUNNER_TEMP "payload"
+          Expand-Archive $zip $payload
+          "MOPK_PLUGIN_DLL=$(Join-Path $payload 'sample_plugin.dll')" >> $env:GITHUB_ENV
+
+      - name: Check the plugin's Qt entry point
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $dumpbin = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -find 'VC/Tools/MSVC/**/bin/Hostx64/x64/dumpbin.exe' | Select-Object -First 1
+          if (-not $dumpbin) { throw 'dumpbin.exe not found.' }
+          if (-not (& $dumpbin /nologo /exports $env:MOPK_PLUGIN_DLL | Select-String -SimpleMatch ' qt_plugin_instance')) {
+              throw 'The plugin does not export qt_plugin_instance.'
+          }
+          $bytes = [IO.File]::ReadAllBytes($env:MOPK_PLUGIN_DLL)
+          $offset = [Text.Encoding]::Latin1.GetString($bytes).IndexOf('QTMETADATA !', [StringComparison]::Ordinal)
+          if ($offset -lt 0) { throw 'The plugin has no Qt metadata.' }
+          # Qt's header follows the magic: version, Qt major, Qt minor, then architecture flags with 0x80 for debug builds.
+          if ($bytes[$offset + 15] -band 0x80) { throw 'The plugin metadata declares a debug build, which MO2 rejects.' }
+
+  release:
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    needs: [workflows, checks, plugins]
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release.yml
+    with:
+      expected-version: ${{ needs.checks.outputs.version }}
