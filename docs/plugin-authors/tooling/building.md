@@ -1,15 +1,15 @@
 # Using MOPK in an existing plugin
 
-MOPK's build rules require Git, Windows with an MSVC C++23 toolchain and
-[XMake 3.1.1](https://github.com/xmake-io/xmake/releases/tag/v3.1.1) or newer.
+MOPK's build rules require Git, XMake 3.1.1 or newer and Visual Studio 2022 with
+the C++ toolset and Windows SDK.
 
 ## Setup
 
-| Integration                                | Requirements                              | Adds to the project                                              |
-| ------------------------------------------ | ----------------------------------------- | ---------------------------------------------------------------- |
-| XMake build rules                          | XMake and an MSVC C++23 toolchain         | Plugin targets, packaging and optional deployment.               |
-| [Python helpers](devbench.md#python-setup) | Python 3.11+, DevBench for MO2 operations | A Python dependency. Native integration is optional.             |
-| [DevBench API](devbench.md#native-api)     | MOPK's build rules                        | The API header, its companion source and the Qt handler adapter. |
+| Integration                                | Requirements                                                      | Adds to the project                                              |
+| ------------------------------------------ | ----------------------------------------------------------------- | ---------------------------------------------------------------- |
+| XMake build rules                          | XMake and Visual Studio 2022 with the C++ toolset and Windows SDK | Plugin targets, packaging and optional deployment.               |
+| [Python helpers](devbench.md#python-setup) | Python 3.11+, DevBench for MO2 operations                         | A Python dependency. Native integration is optional.             |
+| [DevBench API](devbench.md#native-api)     | MOPK's build rules                                                | The API header, its companion source and the Qt handler adapter. |
 
 These integrations do not require Copier or its generated project layout.
 

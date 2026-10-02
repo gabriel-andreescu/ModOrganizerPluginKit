@@ -4,8 +4,8 @@ Copier creates an MO2 plugin project.
 
 ## First build
 
-Requires Copier, Git, XMake 3.1.1 or newer and Windows with an MSVC C++23
-toolchain and Windows SDK.
+Requires Git, Copier 9, XMake 3.1.1 or newer and Visual Studio 2022 with the C++
+toolset and Windows SDK.
 
 ```powershell
 copier copy --defaults -d project_name=my_plugin https://github.com/gabriel-andreescu/ModOrganizerPluginKit.git my_plugin
