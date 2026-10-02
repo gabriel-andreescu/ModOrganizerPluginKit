@@ -52,3 +52,13 @@ deploy_2_5_3beta12:
     Initial MO2 2.5.3beta12 plugins/ directories separated by ; (leave blank to
     disable)
   default: ""
+
+mopk_repository:
+  type: str
+  default: https://github.com/gabriel-andreescu/ModOrganizerPluginKit
+  when: false
+
+mopk_docs:
+  type: str
+  default: "{{ mopk_repository }}/blob/main/docs"
+  when: false
