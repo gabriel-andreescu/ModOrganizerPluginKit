@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ctypes
 import json
 import os
 from dataclasses import dataclass
@@ -51,6 +52,29 @@ def _selected(record, install: str | None, instance: str | None, pid: int | None
         and (install is None or _path_key(record["install"]) == _path_key(install))
         and (instance is None or record["instance"].lower() == instance.lower())
     )
+
+
+def _running(pid: int) -> bool:
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.OpenProcess.restype = ctypes.c_void_p
+    kernel32.GetExitCodeProcess.argtypes = [
+        ctypes.c_void_p,
+        ctypes.POINTER(ctypes.c_uint32),
+    ]
+    kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
+    process_query_limited_information = 0x1000
+    still_active = 259
+    handle = kernel32.OpenProcess(process_query_limited_information, False, pid)
+    if not handle:
+        return False
+    try:
+        code = ctypes.c_uint32()
+        return bool(
+            kernel32.GetExitCodeProcess(handle, ctypes.byref(code))
+            and code.value == still_active
+        )
+    finally:
+        kernel32.CloseHandle(handle)
 
 
 def _live(record, session: requests.Session, timeout: float) -> bool:
@@ -118,6 +142,10 @@ def find_instance(
             if not isinstance(record, dict) or not _valid(record, file):
                 continue
             if not _selected(record, install, instance, pid):
+                continue
+            # A killed MO2 leaves its record behind. Probing those ports queues requests on whichever
+            # MO2 holds them now, and enough of them make a live instance miss the timeout.
+            if not _running(record["pid"]):
                 continue
             if _live(record, session, timeout):
                 matches[record["session"]] = Instance(
