@@ -177,12 +177,13 @@ jobs:
           key:
             xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-plugin-${{
             steps.image.outputs.project }}-msvc-objects-${{
-            steps.image.outputs.version }}-mo2-${{ matrix.mo2 }}-${{ github.sha
-            }}
+            steps.image.outputs.version }}-mo2-${{ matrix.mo2 }}-${{
+            steps.image.outputs.configuration }}-${{ github.sha }}
           restore-keys:
             xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-plugin-${{
             steps.image.outputs.project }}-msvc-objects-${{
-            steps.image.outputs.version }}-mo2-${{ matrix.mo2 }}-
+            steps.image.outputs.version }}-mo2-${{ matrix.mo2 }}-${{
+            steps.image.outputs.configuration }}-
 
       - name: Configure
         env:
