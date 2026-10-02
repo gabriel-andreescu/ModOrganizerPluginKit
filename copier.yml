@@ -62,3 +62,8 @@ mopk_docs:
   type: str
   default: "{{ mopk_repository }}/blob/main/docs"
   when: false
+
+mopk_version:
+  type: str
+  default: 0.1.0
+  when: false

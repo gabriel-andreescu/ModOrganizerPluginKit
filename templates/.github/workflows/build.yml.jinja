@@ -14,4 +14,4 @@ jobs:
   build:
     permissions:
       contents: write
-    uses: gabriel-andreescu/ModOrganizerPluginKit/.github/workflows/build.yml@v0.1.0
+    uses: {{ mopk_repository | regex_replace('^https?://[^/]+/', '') }}/.github/workflows/build.yml@v{{ mopk_version }}

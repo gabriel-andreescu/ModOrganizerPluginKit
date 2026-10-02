@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory, gettempdir
 import pytest
 from filelock import FileLock
 
-from tests.support import ROOT, run
+from tests.support import ROOT, VERSION, run
 
 
 @pytest.fixture(scope="session")
@@ -41,6 +41,12 @@ def mopk_addon(tmp_path_factory, xmake):
     directory = tmp_path_factory.mktemp("addon")
     run(directory, xmake, "repo", "--add", "--global", "mopk", ROOT.as_posix())
     run(
-        directory, xrepo, "install", "--addon", "-y", f"--debugdir={ROOT}", "mopk 0.1.0"
+        directory,
+        xrepo,
+        "install",
+        "--addon",
+        "-y",
+        f"--debugdir={ROOT}",
+        f"mopk {VERSION}",
     )
     return xmake

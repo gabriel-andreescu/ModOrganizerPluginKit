@@ -4,7 +4,7 @@ import pytest
 import yaml
 from copier import run_copy
 
-from tests.support import ROOT, archive_files, deployment_config, run
+from tests.support import ROOT, VERSION, archive_files, deployment_config, run
 
 
 def generate(destination, **answers):
@@ -78,7 +78,7 @@ def test_package_composition(tmp_path, mopk_addon):
     (project / "override.txt").write_text("override")
     (project / "xmake.lua").write_text(
         f"add_repositories({json.dumps('mopk ' + ROOT.as_posix())})\n"
-        'add_addons("mopk 0.1.0")\nincludes("@addon/mopk/project")\n'
+        f'add_addons("mopk {VERSION}")\nincludes("@addon/mopk/project")\n'
         'target("Private")\n set_kind("phony")\n set_default(false)\n add_installfiles("private.txt")\n'
         'target("Compiler")\n set_kind("phony")\n set_default(false)\n'
         ' add_deps("Private")\n add_installfiles("output.txt")\n'

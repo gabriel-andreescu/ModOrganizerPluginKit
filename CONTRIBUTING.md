@@ -123,9 +123,11 @@ load the plugin in MO2.
 Keep the XMake version in the CI and consumer workflows aligned with
 [the development setup](docs/maintainers/development.md#xmake).
 
-For releases, update `python/pyproject.toml`, `uv.lock` and the dated changelog
-entry. Add the version to `addons/m/mopk/xmake.lua`, and update the `add_addons`
-version and build workflow tag in the template. Keep existing recipe versions so
+For releases, update `python/pyproject.toml`, `uv.lock`, `mopk_version` in
+`copier.yml` and the dated changelog entry. Add the version to
+`addons/m/mopk/xmake.lua`. The template's `add_addons` version and build
+workflow tag follow `mopk_version`, and CI fails when the package version,
+`mopk_version` and the recipe disagree. Keep existing recipe versions so
 consumers can continue installing older releases.
 
 Merge `dev` into `main` through a pull request without squashing, then publish a

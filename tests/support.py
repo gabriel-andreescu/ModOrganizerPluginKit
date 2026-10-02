@@ -5,7 +5,12 @@ import zipfile
 from contextlib import contextmanager
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[1]
+VERSION = yaml.safe_load((ROOT / "copier.yml").read_text(encoding="utf-8"))[
+    "mopk_version"
+]["default"]
 
 
 @contextmanager

@@ -150,11 +150,13 @@ jobs:
 
       - name: Read version
         id: version
-        if: github.ref_type == 'tag'
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          $version = $env:RELEASE_TAG -creplace '^v', ''
+          $PSNativeCommandUseErrorActionPreference = $true
+          $version = uv run python -c 'import tomllib; print(tomllib.load(open("python/pyproject.toml", "rb"))["project"]["version"])'
+          $templateVersion = uv run python -c 'import yaml; print(yaml.safe_load(open("copier.yml"))["mopk_version"]["default"])'
+          if ($templateVersion -cne $version) {
+              throw "copier.yml mopk_version '$templateVersion' does not match MOPK version '$version'."
+          }
           if (-not (Select-String -Path addons/m/mopk/xmake.lua -SimpleMatch "add_versions(`"$version`", `"v$version`")")) {
               throw "addons/m/mopk/xmake.lua does not list $version."
           }
@@ -219,7 +221,8 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
           $kit = $PWD.Path.Replace('\', '/')
           xmake repo --add --global mopk $kit
-          xrepo install --addon -y --debugdir=$kit "mopk 0.1.0"
+          $version = uv run python -c 'import yaml; print(yaml.safe_load(open("copier.yml"))["mopk_version"]["default"])'
+          xrepo install --addon -y --debugdir=$kit "mopk $version"
           $project = Join-Path $env:RUNNER_TEMP "sample_plugin"
           uv run copier copy --defaults --trust --vcs-ref HEAD -d project_name=sample_plugin $kit $project
           Set-Location $project
