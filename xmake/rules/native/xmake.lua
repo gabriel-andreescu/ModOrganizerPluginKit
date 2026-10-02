@@ -16,7 +16,7 @@ after_config(function(target)
         target:add("symbols", "embed")
     end
     target:add("cxxflags", "/EHsc", "/permissive-")
-    target:add("cxxflags", "/Zc:preprocessor", { tools = "cl" })
+    target:add("cxxflags", "/Zc:preprocessor", "/Zc:__cplusplus", { tools = "cl" })
     if target:get("pcxxheader") then
         -- XMake's generated PCH wrapper triggers these clang-cl diagnostics.
         target:add("cxxflags", "-Wno-microsoft-include", "-Wno-pragma-system-header-outside-header", {
