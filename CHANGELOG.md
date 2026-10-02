@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-02
+
 ### Added
 
 - Generate only tooling configuration for an existing project with
@@ -15,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Changed
 
+- Generated projects pin xmake-luals 0.1.1, whose declarations match the XMake
+  build the kits use.
 - Native targets compile with `/Zc:__cplusplus`, so `__cplusplus` reports the
   selected standard.
 - Generated README lists the documentation links and describes CI.
@@ -25,6 +29,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Fixed
 
+- The build workflow keeps separate compilation caches for different
+  `configure-arguments`.
 - DevBench instance discovery skips records left by MO2 processes that no longer
   run. Probing them could make a running MO2 miss the discovery timeout and be
   reported as not running.

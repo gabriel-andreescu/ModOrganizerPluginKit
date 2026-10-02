@@ -6,7 +6,7 @@ local version = "0.1.0"
 
 add_repositories({{ ('mopk ' ~ mopk_repository | replace('\\', '/')) | to_json(ensure_ascii=False) }})
 add_repositories("xmake-luals https://github.com/gabriel-andreescu/xmake-luals.git")
-add_addons("mopk {{ mopk_version }}", "xmake-luals 0.1.0")
+add_addons("mopk {{ mopk_version }}", "xmake-luals 0.1.1")
 includes("@addon/mopk/project", "@addon/mopk/native", "@addon/xmake-luals/luals")
 {% if devbench_api %}
 
