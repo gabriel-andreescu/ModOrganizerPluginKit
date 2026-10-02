@@ -133,13 +133,14 @@ jobs:
       - name: Check generated projects' formatting
         run: |
           $PSNativeCommandUseErrorActionPreference = $true
+          $description = "A sample plugin whose description is long enough to wrap in the generated README file."
           $variants = @{
-              plugin = @("-d", "project_name=sample_plugin", "-d", "devbench_tests=true", "-d", "devbench_api=true")
+              plugin = @("-d", "devbench_tests=true", "-d", "devbench_api=true")
               tooling = @("-d", "tooling_only=true")
           }
           foreach ($variant in $variants.GetEnumerator()) {
               $project = Join-Path $env:RUNNER_TEMP $variant.Key
-              uv run copier copy --defaults --trust --vcs-ref HEAD @($variant.Value) $env:GITHUB_WORKSPACE $project
+              uv run copier copy --defaults --trust --vcs-ref HEAD -d project_name=sample_plugin -d "description=$description" @($variant.Value) $env:GITHUB_WORKSPACE $project
               Push-Location $project
               git init --quiet
               git add --all
