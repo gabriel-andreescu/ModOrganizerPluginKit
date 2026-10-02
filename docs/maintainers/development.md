@@ -48,6 +48,22 @@ the checkout's `HEAD` commit, including uncommitted changes.
 
 Set `MOPK_TEST_CACHE` to choose the XMake test cache directory.
 
+## Native tests
+
+Requires Visual Studio 2022 with the C++ toolset and Windows SDK.
+
+To build and inspect plugin packages for every supported MO2 release:
+
+```powershell
+$env:MOPK_TEST_NATIVE_PLUGINS = "1"
+uv run pytest tests/native/test_plugins.py
+Remove-Item Env:MOPK_TEST_NATIVE_PLUGINS
+```
+
+The consumer tests build a generated plugin against the uibase and DevBench
+revisions pinned in `packages/`. They check package installation, the DLL's Qt
+metadata and exports, deployed files and ZIP contents.
+
 ## Plugins
 
 Generate a plugin from the local checkout, then build, package and load it for
