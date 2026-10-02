@@ -23,8 +23,7 @@ workflows for Mod Organizer 2 plugins. Use the
 
 ## Validation
 
-- Run the checks relevant to the change before calling it complete. Do not rely
-  on CI alone.
+- Run the checks relevant to the change before calling it complete.
 - Validate rule, package and template changes through a generated consumer for
   every supported MO2 release. Inspect the DLL's Qt plugin metadata, package
   contents and deployed files when those outputs change.
