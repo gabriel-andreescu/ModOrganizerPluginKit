@@ -85,7 +85,7 @@ Set `tooling_only=true` to
 | `devbench_api`                       | `false`     | Include the [DevBench native API](../tooling/devbench.md#native-api).                                                     |
 | `deploy_2_5_2`, `deploy_2_5_3beta12` | Empty       | Initial [deployment](../tooling/packaging.md#deployment) destinations for each release, separated by `;`. Stored locally. |
 
-Put source files in `src/`. MOPK writes build output to `build/`.
+Put source files in `src/`.
 
 ## Tooling for existing projects
 

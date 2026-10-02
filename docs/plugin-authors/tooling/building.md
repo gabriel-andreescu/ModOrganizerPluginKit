@@ -47,11 +47,5 @@ xmake package
 
 The example writes `build/dist/my_plugin/my_plugin-1.0.0-MO2-2.5.2.zip`.
 
-With no target named, `xmake` builds default targets and their dependencies.
-Package rules add dependencies from their `targets` option. The plugin's
-`set_default(false)` leaves build selection to its packages. It still builds
-when a package needs it or when requested directly, for example with
-`xmake build Plugin`.
-
 See [MO2 plugins](plugins.md) for releases and compiler settings, and
 [deployment and packaging](packaging.md) for outputs.

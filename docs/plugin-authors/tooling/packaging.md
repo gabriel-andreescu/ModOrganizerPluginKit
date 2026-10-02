@@ -44,10 +44,6 @@ Use the MO2 installation's `plugins/` directory. Use full target names,
 including namespaces. Paths are absolute or relative to the project root. Each
 release accepts multiple destinations.
 
-```powershell
-xmake
-```
-
 Building a package prepares its current files and deploys them to the
 destinations of the configured MO2 release. Targets or releases without
 destinations are not deployed. Disable deployment with `xmake f --deploy=n`.

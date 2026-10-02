@@ -39,11 +39,10 @@ files or report errors.
 
 ## Plugins
 
-Projects include `.clang-format`, `.clangd` and `.clang-tidy`. The formatting
-configuration requires clang-format 23 or newer. The clangd configuration uses
-`clang-cl` for Windows x64 C++23. The clang-tidy header filter covers `src/`.
-Adjust it if project headers live elsewhere. The generated plugin implements a
-minimal `MOBase::IPlugin` reporting the target's
+Projects include `.clang-format`, `.clangd` and `.clang-tidy`. The clangd
+configuration uses `clang-cl` for Windows x64 C++23. The clang-tidy header
+filter covers `src/`. Adjust it if project headers live elsewhere. The generated
+plugin implements a minimal `MOBase::IPlugin` reporting the target's
 [version](../tooling/plugins.md#definitions) and precompiles the uibase and Qt
 headers in `PCH.h`.
 
