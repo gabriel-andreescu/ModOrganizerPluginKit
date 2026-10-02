@@ -34,7 +34,7 @@ uv run pytest
 ```
 
 These cover Nexus publication planning and its API calls, and the DevBench
-client, instance discovery, pytest plugin and golden checks.
+client, instance discovery and golden checks.
 
 Integration tests require Windows, Git, PowerShell 7 and XMake:
 
@@ -42,9 +42,9 @@ Integration tests require Windows, Git, PowerShell 7 and XMake:
 uv run pytest tests/integration -n 4
 ```
 
-These cover generated projects, deployment, packaging and the release scripts.
-Use `-n 0` for serial execution. Generator tests copy the checkout's `HEAD`
-commit, including uncommitted changes.
+These cover generated projects, deployment, packaging, release scripts and the
+pytest plugin lifecycle. Use `-n 0` for serial execution. Generator tests copy
+the checkout's `HEAD` commit, including uncommitted changes.
 
 Set `MOPK_TEST_CACHE` to choose the XMake test cache directory.
 
