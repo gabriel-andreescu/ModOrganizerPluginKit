@@ -4,7 +4,7 @@ set_policy("package.requires_lock", true)
 
 local version = "0.1.0"
 
-add_repositories("mopk https://github.com/gabriel-andreescu/ModOrganizerPluginKit.git")
+add_repositories({{ ('mopk ' ~ mopk_repository | replace('\\', '/')) | to_json(ensure_ascii=False) }})
 add_repositories("xmake-luals https://github.com/gabriel-andreescu/xmake-luals.git")
 add_addons("mopk 0.1.0", "xmake-luals 0.1.0")
 includes("@addon/mopk/project", "@addon/mopk/native", "@addon/xmake-luals/luals")

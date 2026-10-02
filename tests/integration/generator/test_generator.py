@@ -12,7 +12,7 @@ def generate(destination, **answers):
         str(ROOT),
         destination,
         vcs_ref="HEAD",
-        data=answers,
+        data={"mopk_repository": ROOT.as_posix(), **answers},
         defaults=True,
         quiet=True,
     )

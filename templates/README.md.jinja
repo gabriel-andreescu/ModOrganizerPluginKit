@@ -1,28 +1,28 @@
 # {{ project_name }}
 
 This project uses
-[ModOrganizerPluginKit (MOPK)](https://github.com/gabriel-andreescu/ModOrganizerPluginKit)
+[ModOrganizerPluginKit (MOPK)]({{ mopk_repository }})
 for project generation and development tooling.
 
 ## Development
 
 See MOPK's
-[project build instructions](https://github.com/gabriel-andreescu/ModOrganizerPluginKit/blob/main/docs/plugin-authors/template/projects.md#build-a-generated-project)
+[project build instructions]({{ mopk_docs }}/plugin-authors/template/projects.md#build-a-generated-project)
 and
-[deployment and packaging](https://github.com/gabriel-andreescu/ModOrganizerPluginKit/blob/main/docs/plugin-authors/tooling/packaging.md).
+[deployment and packaging]({{ mopk_docs }}/plugin-authors/tooling/packaging.md).
 {% if pre_commit %}
 
 See
-[formatting setup](https://github.com/gabriel-andreescu/ModOrganizerPluginKit/blob/main/docs/plugin-authors/template/defaults.md#formatting).
+[formatting setup]({{ mopk_docs }}/plugin-authors/template/defaults.md#formatting).
 {% endif %}
 
 See
-[Clang tooling](https://github.com/gabriel-andreescu/ModOrganizerPluginKit/blob/main/docs/plugin-authors/tooling/clang.md)
+[Clang tooling]({{ mopk_docs }}/plugin-authors/tooling/clang.md)
 for formatting and linting.
 {% if devbench_api %}
 
 See
-[DevBench native integration](https://github.com/gabriel-andreescu/ModOrganizerPluginKit/blob/main/docs/plugin-authors/tooling/devbench.md#native-api).
+[DevBench native integration]({{ mopk_docs }}/plugin-authors/tooling/devbench.md#native-api).
 {% endif %}
 
 ```sh
@@ -34,7 +34,7 @@ xmake package
 ## Tests
 
 See
-[DevBench setup](https://github.com/gabriel-andreescu/ModOrganizerPluginKit/blob/main/docs/plugin-authors/template/defaults.md#devbench)
+[DevBench setup]({{ mopk_docs }}/plugin-authors/template/defaults.md#devbench)
 and the
-[Python client and fixtures](https://github.com/gabriel-andreescu/ModOrganizerPluginKit/blob/main/docs/plugin-authors/tooling/devbench.md).
+[Python client and fixtures]({{ mopk_docs }}/plugin-authors/tooling/devbench.md).
 {% endif %}
