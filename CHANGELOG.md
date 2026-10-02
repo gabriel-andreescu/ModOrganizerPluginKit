@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Changed
 
+- Native targets compile with `/Zc:__cplusplus`, so `__cplusplus` reports the
+  selected standard.
 - Generated README lists the documentation links and describes CI.
 - Generated VS Code settings recommend and configure Prettier, StyLua and the
   Lua language server.
