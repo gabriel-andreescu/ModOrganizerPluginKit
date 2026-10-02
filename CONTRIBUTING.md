@@ -1,7 +1,7 @@
 # Contributing
 
-See [Development](docs/maintainers/development.md) for the environment,
-formatting and checks.
+See [Development](docs/maintainers/development.md) for the Python environment,
+formatting and tests.
 
 ## Repository layout
 
@@ -87,12 +87,13 @@ xmake
 xmake package
 ```
 
-The source override installs uncommitted code under the requested version, so it
-belongs in an isolated development cache. The project's repository takes
-precedence over the one in `xmake.lua`, so recipes also come from the checkout.
-Disabling the requires lock keeps `xmake-requires.lock` from pinning or
-recording it. Reinstall the addon after rule changes, and a package after recipe
-changes with `xmake require -f -y <package>`.
+Keep that global directory for the development session. The source override
+installs uncommitted code under the requested version, so it belongs in an
+isolated development cache. The project's repository takes precedence over the
+one in `xmake.lua`, so recipes also come from the checkout. Disabling the
+requires lock keeps `xmake-requires.lock` from pinning or recording it.
+Reinstall the addon after rule changes, and a package after recipe changes with
+`xmake require -f -y <package>`.
 
 XMake records the checkout in `xmake-addons.lock` when the lock has no entry for
 the requested version. Don't commit that lock. Once the version is released,

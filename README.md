@@ -9,7 +9,7 @@ the [documentation](docs/README.md) for individual rules and helpers.
 
 ## Create a project
 
-Requires [Copier](https://copier.readthedocs.io/en/stable/), Git and
+Requires [Copier 9](https://copier.readthedocs.io/en/stable/), Git and
 [XMake 3.1.1 or newer](https://github.com/xmake-io/xmake/releases/tag/v3.1.1).
 
 ```powershell
@@ -30,7 +30,7 @@ copier update
 
 ## Development
 
-See [development setup](docs/maintainers/development.md) and
+See [development setup and tests](docs/maintainers/development.md) and
 [contribution guidelines](CONTRIBUTING.md).
 
 ## License

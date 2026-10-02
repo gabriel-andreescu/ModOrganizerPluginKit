@@ -30,6 +30,6 @@ individual build rules or helpers.
 
 ## MOPK maintainers
 
-- [Development](maintainers/development.md): environment, formatting and checks.
+- [Development](maintainers/development.md): environment, formatting and tests.
 - [Contributing](../CONTRIBUTING.md): repository layout, package maintenance and
   MOPK releases.
