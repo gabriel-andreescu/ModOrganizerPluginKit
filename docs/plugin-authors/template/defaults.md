@@ -6,8 +6,10 @@ compiler defaults and packaged outputs.
 ## Editor and Git settings
 
 Projects include `.editorconfig` and `.gitattributes` for consistent
-indentation, LF line endings and binary files. `.luarc.json` loads the XMake
-declarations and plugin from
+indentation, LF line endings and binary files. VS Code settings recommend and
+configure EditorConfig, XMake, Prettier, StyLua and the Lua language server,
+along with clangd and, with DevBench tests, Python and Ruff. `.luarc.json` loads
+the XMake declarations and plugin from
 [xmake-luals](https://github.com/gabriel-andreescu/xmake-luals), which `xmake f`
 installs into `.xmake/luals`.
 
