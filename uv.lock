@@ -5,7 +5,17 @@ requires-python = ">=3.11"
 [manifest]
 members = [
     "modorganizer-plugin-kit",
-    "modorganizerpluginkit",
+]
+
+[manifest.dependency-groups]
+dev = [
+    { name = "copier", specifier = ">=9.0,<10" },
+    { name = "filelock", specifier = ">=3.20,<4" },
+    { name = "modorganizer-plugin-kit", extras = ["test"], editable = "python" },
+    { name = "pre-commit", specifier = ">=4.6.2,<5" },
+    { name = "pytest", specifier = ">=8.4,<10" },
+    { name = "pytest-xdist", specifier = ">=3.8,<4" },
+    { name = "ruff", specifier = ">=0.16.7" },
 ]
 
 [[package]]
@@ -408,35 +418,6 @@ requires-dist = [
     { name = "requests", specifier = ">=2.28" },
 ]
 provides-extras = ["test"]
-
-[[package]]
-name = "modorganizerpluginkit"
-version = "0"
-source = { virtual = "." }
-
-[package.dev-dependencies]
-dev = [
-    { name = "copier" },
-    { name = "filelock" },
-    { name = "modorganizer-plugin-kit", extra = ["test"] },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-xdist" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "copier", specifier = ">=9.0,<10" },
-    { name = "filelock", specifier = ">=3.20,<4" },
-    { name = "modorganizer-plugin-kit", extras = ["test"], editable = "python" },
-    { name = "pre-commit", specifier = ">=4.6.2,<5" },
-    { name = "pytest", specifier = ">=8.4,<10" },
-    { name = "pytest-xdist", specifier = ">=3.8,<4" },
-    { name = "ruff", specifier = ">=0.16.7" },
-]
 
 [[package]]
 name = "nodeenv"

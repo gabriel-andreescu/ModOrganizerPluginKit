@@ -5,7 +5,6 @@ from unittest.mock import patch
 
 import pytest
 import yaml
-
 from tests.support import ROOT
 
 MOD_ID = "7318624464804"

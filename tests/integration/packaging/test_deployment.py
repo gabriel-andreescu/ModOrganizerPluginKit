@@ -4,7 +4,6 @@ import shutil
 import subprocess
 
 import pytest
-
 from tests.support import deployment_config, locked_file, run
 
 

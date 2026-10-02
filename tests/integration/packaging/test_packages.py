@@ -2,7 +2,6 @@ import json
 import subprocess
 
 import pytest
-
 from tests.support import archive_files, locked_file, run
 
 

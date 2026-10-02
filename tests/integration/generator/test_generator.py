@@ -3,7 +3,6 @@ import json
 import pytest
 import yaml
 from copier import run_copy
-
 from tests.support import ROOT, VERSION, archive_files, deployment_config, run
 
 
