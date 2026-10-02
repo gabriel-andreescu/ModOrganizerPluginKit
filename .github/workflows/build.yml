@@ -35,6 +35,9 @@ on:
 permissions:
   contents: read
 
+env:
+  XMAKE_COMMIT: 7ec04bfc12726ff51d69c9efe69280bd163ce28d
+
 jobs:
   checks:
     runs-on: ubuntu-latest
@@ -87,7 +90,7 @@ jobs:
 
       - uses: xmake-io/github-action-setup-xmake@3a1a5dddfc7fa625d9a698738334bf55655a861a
         with:
-          xmake-version: "3.1.1"
+          xmake-version: gabriel-andreescu/xmake#sha@${{ env.XMAKE_COMMIT }}
           actions-cache-folder: .xmake-install
 
       - name: Fix XMake MSVC precompiled header caching
@@ -124,11 +127,11 @@ jobs:
             ${{ env.XMAKE_GLOBALDIR }}
             ${{ env.XMAKE_PKG_CACHEDIR }}
           key:
-            xmake-3.1.1-${{ runner.os }}-plugin-${{ steps.image.outputs.project
-            }}-downloads-${{ github.sha }}
+            xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-plugin-${{
+            steps.image.outputs.project }}-downloads-${{ github.sha }}
           restore-keys:
-            xmake-3.1.1-${{ runner.os }}-plugin-${{ steps.image.outputs.project
-            }}-downloads-
+            xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-plugin-${{
+            steps.image.outputs.project }}-downloads-
 
       - name: Cache installed dependencies
         id: dependencies
@@ -136,10 +139,10 @@ jobs:
         with:
           path: ${{ env.XMAKE_PKG_INSTALLDIR }}
           key:
-            xmake-3.1.1-${{ runner.os }}-plugin-${{ steps.image.outputs.project
-            }}-msvc-${{ steps.image.outputs.version }}-mo2-${{ matrix.mo2 }}-${{
-            steps.image.outputs.configuration }}-${{
-            hashFiles(format('{0}/xmake-requires.lock',
+            xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-plugin-${{
+            steps.image.outputs.project }}-msvc-${{ steps.image.outputs.version
+            }}-mo2-${{ matrix.mo2 }}-${{ steps.image.outputs.configuration
+            }}-${{ hashFiles(format('{0}/xmake-requires.lock',
             inputs.project-directory)) != '' &&
             hashFiles(format('{0}/**/xmake-*.lock', inputs.project-directory),
             format('{0}/packages/**', inputs.project-directory)) ||
@@ -152,13 +155,14 @@ jobs:
         with:
           path: ${{ runner.temp }}/mopk/compilation
           key:
-            xmake-3.1.1-${{ runner.os }}-plugin-${{ steps.image.outputs.project
-            }}-msvc-objects-${{ steps.image.outputs.version }}-mo2-${{
-            matrix.mo2 }}-${{ github.sha }}
+            xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-plugin-${{
+            steps.image.outputs.project }}-msvc-objects-${{
+            steps.image.outputs.version }}-mo2-${{ matrix.mo2 }}-${{ github.sha
+            }}
           restore-keys:
-            xmake-3.1.1-${{ runner.os }}-plugin-${{ steps.image.outputs.project
-            }}-msvc-objects-${{ steps.image.outputs.version }}-mo2-${{
-            matrix.mo2 }}-
+            xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-plugin-${{
+            steps.image.outputs.project }}-msvc-objects-${{
+            steps.image.outputs.version }}-mo2-${{ matrix.mo2 }}-
 
       - name: Configure
         env:
