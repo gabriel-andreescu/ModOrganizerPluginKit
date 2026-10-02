@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- The `devbench-api` package installs DevBench's release archive, verified by
+  checksum, instead of cloning its repository.
+
 ## [0.2.0] - 2026-10-02
 
 ### Added
