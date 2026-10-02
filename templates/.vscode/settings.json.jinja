@@ -1,19 +1,26 @@
-{
+{% from 'templates/_partials/json.jinja' import prettier_json %}
+{% set settings = {
+    '[lua]': {'editor.defaultFormatter': 'JohnnyMorganz.stylua'},
+    '[markdown][json][jsonc][yaml]': {'editor.defaultFormatter': 'esbenp.prettier-vscode'},
+    'stylua.targetReleaseVersion': 'v2.5.2',
+    'stylua.verify': true,
+    'Lua.format.enable': false,
+    'xmake.autoGenerateCompileCommands': 'disabled',
+    'files.watcherExclude': {'**/.xmake/**': true, '**/build/**': true, '**/dist/**': true},
+    'search.exclude': {'**/.xmake/**': true, '**/build/**': true, '**/dist/**': true}
+} %}
 {% if devbench_tests %}
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
-  "ruff.path": ["${workspaceFolder}/.venv/Scripts/ruff.exe"],
-  "python.testing.pytestEnabled": true,
-  "python.testing.unittestEnabled": false,
-  "[python]": {
-    "editor.defaultFormatter": "charliermarsh.ruff"
-  },
+{% set _ = settings.update({
+    'python.defaultInterpreterPath': '${workspaceFolder}/.venv',
+    'ruff.path': ['${workspaceFolder}/.venv/Scripts/ruff.exe'],
+    'python.testing.pytestEnabled': true,
+    'python.testing.unittestEnabled': false,
+    '[python]': {'editor.defaultFormatter': 'charliermarsh.ruff'}
+}) %}
 {% endif %}
-  "xmake.autoGenerateCompileCommands": "disabled",
-  "C_Cpp.intelliSenseEngine": "disabled",
-  "[c]": {
-    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
-  },
-  "[cpp]": {
-    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
-  }
-}
+{% set _ = settings.update({
+    'C_Cpp.intelliSenseEngine': 'disabled',
+    '[c]': {'editor.defaultFormatter': 'llvm-vs-code-extensions.vscode-clangd'},
+    '[cpp]': {'editor.defaultFormatter': 'llvm-vs-code-extensions.vscode-clangd'}
+}) %}
+{{ prettier_json(settings) }}

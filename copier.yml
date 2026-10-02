@@ -3,13 +3,38 @@ _subdirectory: templates
 _envops:
   trim_blocks: true
   lstrip_blocks: true
+_exclude:
+  - _partials
+  - |
+    {% if tooling_only %}
+    **
+    !/.clang-format
+    !/.clang-tidy
+    !/.clangd
+    !/.editorconfig
+    !/.gitattributes
+    !/.gitignore
+    !/.pre-commit-config.yaml
+    !/.prettierignore
+    !/.prettierrc.json
+    !/.stylua.toml
+    !/.vscode/
+    !/.vscode/**
+    !/{{ _copier_conf.answers_file }}
+    {% endif %}
 _skip_if_exists:
   - .xmake/mopk/deploy.json
+
+tooling_only:
+  type: bool
+  help: Configure tooling for an existing project
+  default: false
 
 project_name:
   type: str
   help: Project name
   default: my_plugin
+  when: "{{ not tooling_only }}"
   validator: >-
     {% if not (project_name | regex_search('^[A-Za-z][A-Za-z0-9_-]*$')) %} Use
     letters, digits, underscores or dashes, starting with a letter. {% endif %}
@@ -18,11 +43,13 @@ description:
   type: str
   help: Short project description
   default: ""
+  when: "{{ not tooling_only }}"
 
 author:
   type: str
   help: Author
   default: ""
+  when: "{{ not tooling_only }}"
 
 pre_commit:
   type: bool
@@ -33,11 +60,13 @@ devbench_tests:
   type: bool
   help: Include DevBench tests using pytest
   default: false
+  when: "{{ not tooling_only }}"
 
 devbench_api:
   type: bool
   help: Include the DevBench native API
   default: false
+  when: "{{ not tooling_only }}"
 
 deploy_2_5_2:
   type: str
@@ -45,6 +74,7 @@ deploy_2_5_2:
     Initial MO2 2.5.2 plugins/ directories separated by ; (leave blank to
     disable)
   default: ""
+  when: "{{ not tooling_only }}"
 
 deploy_2_5_3beta12:
   type: str
@@ -52,3 +82,19 @@ deploy_2_5_3beta12:
     Initial MO2 2.5.3beta12 plugins/ directories separated by ; (leave blank to
     disable)
   default: ""
+  when: "{{ not tooling_only }}"
+
+mopk_repository:
+  type: str
+  default: https://github.com/gabriel-andreescu/ModOrganizerPluginKit
+  when: false
+
+mopk_docs:
+  type: str
+  default: "{{ mopk_repository }}/blob/main/docs"
+  when: false
+
+mopk_version:
+  type: str
+  default: 0.2.0
+  when: false

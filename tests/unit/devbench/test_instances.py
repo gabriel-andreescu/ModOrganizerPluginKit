@@ -4,16 +4,31 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
 
-from mopk.devbench import DevBenchError, find_instance
+from mopk.devbench import DevBenchError, find_instance, instances
 
 
 @pytest.fixture
-def mo2(tmp_path):
+def mo2(tmp_path, monkeypatch):
     records = tmp_path / "devbench" / "mo2" / "instances"
     records.mkdir(parents=True)
     servers = []
+    running = set()
+    requests = []
+    monkeypatch.setattr(instances, "_running", lambda pid: pid in running)
 
-    def start(pid, *, install, instance="", session=None, live=True):
+    def start(pid, *, install, instance="", session=None, live=True, port=None):
+        if port is not None:
+            record = {
+                "install": install,
+                "instance": instance,
+                "session": session or f"session-{pid}",
+                "pid": pid,
+                "exe": f"{install}\\ModOrganizer.exe",
+                "port": port,
+            }
+            (records / f"{pid}.json").write_text(json.dumps(record), encoding="utf-8")
+            return port
+        running.add(pid)
         identity = {
             "install": install,
             "instance": instance,
@@ -24,6 +39,7 @@ def mo2(tmp_path):
 
         class Health(BaseHTTPRequestHandler):
             def do_GET(self):
+                requests.append(pid)
                 body = json.dumps({**identity, "port": port, "ok": True}).encode()
                 self.send_response(200)
                 self.end_headers()
@@ -45,6 +61,7 @@ def mo2(tmp_path):
         (records / f"{pid}.json").write_text(json.dumps(record), encoding="utf-8")
         return port
 
+    start.requests = requests
     yield start
     for server in servers:
         server.shutdown()
@@ -75,3 +92,12 @@ def test_selectors_narrow_several_live_instances(mo2, tmp_path):
         DevBenchError, match=r"MO2 not running: MO2 \(instance Oblivion\)"
     ):
         find_instance(instance="Oblivion", local_app_data=tmp_path)
+
+
+def test_records_of_exited_processes_are_not_probed(mo2, tmp_path):
+    port = mo2(100, install="C:\\MO2", instance="Skyrim")
+    for pid in range(200, 215):
+        mo2(pid, install="C:\\MO2", instance="Skyrim", port=port)
+
+    assert find_instance(local_app_data=tmp_path).pid == 100
+    assert mo2.requests == [100]

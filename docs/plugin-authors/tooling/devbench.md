@@ -81,6 +81,12 @@ devbench_instance = "Skyrim"
 Command-line selectors override the settings. The session connects once, when
 its first test requests the client. Run MO2 tests without pytest-xdist workers.
 
+While the session runs, it turns off the Missing Masters check of MO2's Basic
+diagnosis plugin and restores the previous value at the end. MO2 runs that check
+on a worker thread while a refresh rebuilds the plugin list, so suites that
+refresh MO2 repeatedly can crash it. If a run stops before the session ends,
+re-enable the check under Settings → Plugins.
+
 | Fixture            | Value                                                                                                                  |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | `devbench`         | Client with a separate JSON transcript for each test.                                                                  |

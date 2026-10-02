@@ -45,9 +45,7 @@ function prepare(target)
         try({
             function()
                 for _, input in ipairs(inputs) do
-                    if path.filename(input.source):lower() ~= ".gitkeep" then
-                        os.cp(input.source, path.join(stage, input.destination))
-                    end
+                    os.cp(input.source, path.join(stage, input.destination))
                 end
                 if os.exists(output) then
                     os.rm(output)

@@ -1,12 +1,16 @@
-{
-  "recommendations": [
-    "tboox.xmake-vscode",
-    "EditorConfig.EditorConfig",
-    "gabriel-andreescu.bbcode-editor",
-{% if devbench_tests %}
-    "ms-python.python",
-    "charliermarsh.ruff",
+{% from 'templates/_partials/json.jinja' import prettier_json %}
+{% set recommendations = [
+    'EditorConfig.EditorConfig',
+    'tboox.xmake-vscode',
+    'esbenp.prettier-vscode',
+    'JohnnyMorganz.stylua',
+    'sumneko.lua'
+] %}
+{% if not tooling_only %}
+{% set _ = recommendations.append('gabriel-andreescu.bbcode-editor') %}
 {% endif %}
-    "llvm-vs-code-extensions.vscode-clangd"
-  ]
-}
+{% if devbench_tests %}
+{% set _ = recommendations.extend(['ms-python.python', 'charliermarsh.ruff']) %}
+{% endif %}
+{% set _ = recommendations.append('llvm-vs-code-extensions.vscode-clangd') %}
+{{ prettier_json({'recommendations': recommendations}) }}

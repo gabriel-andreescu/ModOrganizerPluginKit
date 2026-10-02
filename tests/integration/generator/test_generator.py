@@ -4,7 +4,7 @@ import pytest
 import yaml
 from copier import run_copy
 
-from tests.support import ROOT, archive_files, deployment_config, run
+from tests.support import ROOT, VERSION, archive_files, deployment_config, run
 
 
 def generate(destination, **answers):
@@ -12,7 +12,7 @@ def generate(destination, **answers):
         str(ROOT),
         destination,
         vcs_ref="HEAD",
-        data=answers,
+        data={"mopk_repository": ROOT.as_posix(), **answers},
         defaults=True,
         quiet=True,
     )
@@ -78,7 +78,7 @@ def test_package_composition(tmp_path, mopk_addon):
     (project / "override.txt").write_text("override")
     (project / "xmake.lua").write_text(
         f"add_repositories({json.dumps('mopk ' + ROOT.as_posix())})\n"
-        'add_addons("mopk 0.1.0")\nincludes("@addon/mopk/project")\n'
+        f'add_addons("mopk {VERSION}")\nincludes("@addon/mopk/project")\n'
         'target("Private")\n set_kind("phony")\n set_default(false)\n add_installfiles("private.txt")\n'
         'target("Compiler")\n set_kind("phony")\n set_default(false)\n'
         ' add_deps("Private")\n add_installfiles("output.txt")\n'
@@ -108,3 +108,38 @@ def test_package_composition(tmp_path, mopk_addon):
     assert (tmp_path / "stable/output.txt").read_text() == "compiled"
     assert not (tmp_path / "stable/private.txt").exists()
     assert not (tmp_path / "beta").exists()
+
+
+def test_tooling_only_keeps_existing_project(tmp_path):
+    existing = {
+        "README.md": "# Existing project\n",
+        "xmake.lua": 'set_project("Existing")\n',
+        "src/Plugin.cpp": "existing source\n",
+    }
+    for name, contents in existing.items():
+        destination = tmp_path / name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(contents)
+    generate(tmp_path, tooling_only=True)
+    for name, contents in existing.items():
+        assert (tmp_path / name).read_text() == contents
+    generated = {
+        path.relative_to(tmp_path).as_posix()
+        for path in tmp_path.rglob("*")
+        if path.is_file()
+    } - existing.keys()
+    assert generated == {
+        ".clang-format",
+        ".clang-tidy",
+        ".clangd",
+        ".copier-answers.yml",
+        ".editorconfig",
+        ".gitattributes",
+        ".gitignore",
+        ".pre-commit-config.yaml",
+        ".prettierignore",
+        ".prettierrc.json",
+        ".stylua.toml",
+        ".vscode/extensions.json",
+        ".vscode/settings.json",
+    }

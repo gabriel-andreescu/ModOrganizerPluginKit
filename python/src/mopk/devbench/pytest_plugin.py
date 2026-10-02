@@ -2,6 +2,7 @@
 
 import json
 import re
+from contextlib import contextmanager
 from functools import partial
 from pathlib import Path
 
@@ -87,6 +88,33 @@ def _client(config):
     return Client.for_instance(instance, timeout=timeout)
 
 
+@contextmanager
+def _missing_masters_check_off(client):
+    # MO2 runs this check on a worker thread while refreshes rebuild the plugin list
+    # on the main thread, so tests that refresh MO2 repeatedly can crash it.
+    def setting(action, **value):
+        return client.call(
+            "settings",
+            {
+                "action": action,
+                "section": "plugins",
+                "plugin": "Basic diagnosis plugin",
+                "key": "check_missingmasters",
+                **value,
+            },
+        )["value"]
+
+    original = setting("get")
+    if original is None:
+        yield
+        return
+    setting("set", value=False)
+    try:
+        yield
+    finally:
+        setting("set", value=original)
+
+
 @pytest.fixture(scope="session")
 def devbench_session(request):
     if not request.config.getoption("mo2_tests"):
@@ -100,7 +128,8 @@ def devbench_session(request):
                 f"DevBench installed. Connection error: {error}",
                 pytrace=False,
             )
-        yield client
+        with _missing_masters_check_off(client):
+            yield client
 
 
 @pytest.fixture(name="wait_for", scope="session")

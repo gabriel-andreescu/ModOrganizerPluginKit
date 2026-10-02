@@ -1,5 +1,4 @@
 import hashlib
-import json
 import os
 import shutil
 from pathlib import Path
@@ -8,7 +7,7 @@ from tempfile import TemporaryDirectory, gettempdir
 import pytest
 from filelock import FileLock
 
-from tests.support import ROOT, run
+from tests.support import ROOT, VERSION, run
 
 
 @pytest.fixture(scope="session")
@@ -37,19 +36,17 @@ def xmake(worker_id):
 
 @pytest.fixture(scope="session")
 def mopk_addon(tmp_path_factory, xmake):
-    project = tmp_path_factory.mktemp("addon")
-    (project / "xmake.lua").write_text(
-        f"add_repositories({json.dumps('mopk ' + ROOT.as_posix())})\n"
-        'target("addon-install")\n    set_kind("phony")\n'
-    )
+    xrepo = shutil.which("xrepo")
+    assert xrepo, "Install XMake to run build integration tests."
+    directory = tmp_path_factory.mktemp("addon")
+    run(directory, xmake, "repo", "--add", "--global", "mopk", ROOT.as_posix())
     run(
-        project,
-        xmake,
-        "require",
+        directory,
+        xrepo,
+        "install",
         "--addon",
-        "-f",
         "-y",
         f"--debugdir={ROOT}",
-        "mopk 0.1.0",
+        f"mopk {VERSION}",
     )
     return xmake

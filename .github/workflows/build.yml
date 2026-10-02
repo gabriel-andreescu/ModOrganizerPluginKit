@@ -35,6 +35,9 @@ on:
 permissions:
   contents: read
 
+env:
+  XMAKE_COMMIT: 9c1ecaf411d668305e360a5563502f6dbc8f38d7
+
 jobs:
   checks:
     runs-on: ubuntu-latest
@@ -57,6 +60,26 @@ jobs:
           key:
             pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml')
             }}
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if:
+          hashFiles('.pre-commit-config.yaml') != '' &&
+          hashFiles('package-lock.json', '**/package-lock.json') != ''
+        with:
+          node-version: "22"
+
+      - name: Install Node dependencies
+        if:
+          hashFiles('.pre-commit-config.yaml') != '' &&
+          hashFiles('package-lock.json', '**/package-lock.json') != ''
+        working-directory: ${{ github.workspace }}
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          foreach ($lockfile in git ls-files ':(glob)**/package-lock.json') {
+              $directory = Split-Path -Parent $lockfile
+              npm ci --prefix ($directory ? $directory : '.') --no-audit --no-fund
+          }
 
       - name: Lint and format
         if: hashFiles('.pre-commit-config.yaml') != ''
@@ -87,21 +110,8 @@ jobs:
 
       - uses: xmake-io/github-action-setup-xmake@3a1a5dddfc7fa625d9a698738334bf55655a861a
         with:
-          xmake-version: "3.1.1"
+          xmake-version: gabriel-andreescu/xmake#sha@${{ env.XMAKE_COMMIT }}
           actions-cache-folder: .xmake-install
-
-      - name: Fix XMake MSVC precompiled header caching
-        run: |
-          xmake lua -c '
-            local file = path.join(os.programdir(), "modules/core/tools/cl.lua")
-            local source = io.readfile(file)
-            local old = "if objectfile:endswith(\".pch\") then"
-            local replacement = "if objectfile:endswith(\".pch\") or objectfile:endswith(\".pch.obj\") then"
-            if not source:find(replacement, 1, true) then
-              assert(source:find(old, 1, true), "Unexpected XMake MSVC PCH check")
-              local patched = source:replace(old, replacement, {plain = true})
-              io.writefile(file, patched)
-            end'
 
       - name: Set XMake cache directories
         id: image
@@ -124,11 +134,11 @@ jobs:
             ${{ env.XMAKE_GLOBALDIR }}
             ${{ env.XMAKE_PKG_CACHEDIR }}
           key:
-            xmake-3.1.1-${{ runner.os }}-plugin-${{ steps.image.outputs.project
-            }}-downloads-${{ github.sha }}
+            xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-plugin-${{
+            steps.image.outputs.project }}-downloads-${{ github.sha }}
           restore-keys:
-            xmake-3.1.1-${{ runner.os }}-plugin-${{ steps.image.outputs.project
-            }}-downloads-
+            xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-plugin-${{
+            steps.image.outputs.project }}-downloads-
 
       - name: Cache installed dependencies
         id: dependencies
@@ -136,10 +146,10 @@ jobs:
         with:
           path: ${{ env.XMAKE_PKG_INSTALLDIR }}
           key:
-            xmake-3.1.1-${{ runner.os }}-plugin-${{ steps.image.outputs.project
-            }}-msvc-${{ steps.image.outputs.version }}-mo2-${{ matrix.mo2 }}-${{
-            steps.image.outputs.configuration }}-${{
-            hashFiles(format('{0}/xmake-requires.lock',
+            xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-plugin-${{
+            steps.image.outputs.project }}-msvc-${{ steps.image.outputs.version
+            }}-mo2-${{ matrix.mo2 }}-${{ steps.image.outputs.configuration
+            }}-${{ hashFiles(format('{0}/xmake-requires.lock',
             inputs.project-directory)) != '' &&
             hashFiles(format('{0}/**/xmake-*.lock', inputs.project-directory),
             format('{0}/packages/**', inputs.project-directory)) ||
@@ -152,13 +162,15 @@ jobs:
         with:
           path: ${{ runner.temp }}/mopk/compilation
           key:
-            xmake-3.1.1-${{ runner.os }}-plugin-${{ steps.image.outputs.project
-            }}-msvc-objects-${{ steps.image.outputs.version }}-mo2-${{
-            matrix.mo2 }}-${{ github.sha }}
+            xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-plugin-${{
+            steps.image.outputs.project }}-msvc-objects-${{
+            steps.image.outputs.version }}-mo2-${{ matrix.mo2 }}-${{
+            steps.image.outputs.configuration }}-${{ github.sha }}
           restore-keys:
-            xmake-3.1.1-${{ runner.os }}-plugin-${{ steps.image.outputs.project
-            }}-msvc-objects-${{ steps.image.outputs.version }}-mo2-${{
-            matrix.mo2 }}-
+            xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-plugin-${{
+            steps.image.outputs.project }}-msvc-objects-${{
+            steps.image.outputs.version }}-mo2-${{ matrix.mo2 }}-${{
+            steps.image.outputs.configuration }}-
 
       - name: Configure
         env:
