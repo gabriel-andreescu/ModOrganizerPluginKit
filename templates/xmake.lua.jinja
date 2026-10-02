@@ -1,5 +1,5 @@
 set_xmakever("3.1.1")
-set_project("{{ project_name }}")
+set_project({{ project_name | to_json(ensure_ascii=False) }})
 set_policy("package.requires_lock", true)
 
 local version = "0.1.0"
@@ -11,7 +11,6 @@ includes("@addon/mopk/project", "@addon/mopk/native", "@addon/xmake-luals/luals"
 {% if devbench_api %}
 
 -- Dependencies
-
 add_requires("devbench-api 0.1.0", { system = false })
 {% endif %}
 
@@ -19,7 +18,7 @@ add_requires("devbench-api 0.1.0", { system = false })
 
 target("Plugin", function()
     set_default(false)
-    set_basename("{{ project_name }}")
+    set_basename({{ project_name | to_json(ensure_ascii=False) }})
     set_version(version)
     add_rules("@addon/mopk/plugin")
     add_files("$(projectdir)/src/**.cpp", "$(projectdir)/src/**.h|PCH.h")
@@ -34,8 +33,7 @@ target("Plugin", function()
 end)
 
 -- Packages
-
-target("{{ project_name }}", function()
+target({{ project_name | to_json(ensure_ascii=False) }}, function()
     set_version(version)
     add_rules("@addon/mopk/package", { targets = { "Plugin" } })
 end)
