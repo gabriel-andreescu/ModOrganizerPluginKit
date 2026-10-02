@@ -1,8 +1,9 @@
 import json
+import shutil
 
 import pytest
 import yaml
-from copier import run_copy
+from copier import run_copy, run_update
 from tests.support import ROOT, VERSION, archive_files, deployment_config, run
 
 
@@ -66,6 +67,19 @@ def test_deployment_answers(tmp_path):
     answers = yaml.safe_load((tmp_path / "project/.copier-answers.yml").read_text())
     assert "deploy_2_5_2" not in answers
     assert "deploy_2_5_3beta12" not in answers
+
+
+def test_kit_release_pins(tmp_path):
+    generate(
+        tmp_path,
+        mopk_repository="https://github.com/gabriel-andreescu/ModOrganizerPluginKit",
+    )
+    workflow = yaml.safe_load((tmp_path / ".github/workflows/build.yml").read_text())
+    assert (
+        workflow["jobs"]["build"]["uses"]
+        == f"gabriel-andreescu/ModOrganizerPluginKit/.github/workflows/build.yml@v{VERSION}"
+    )
+    assert f'add_addons("mopk {VERSION}", ' in (tmp_path / "xmake.lua").read_text()
 
 
 def test_package_composition(tmp_path, mopk_addon):
@@ -142,3 +156,60 @@ def test_tooling_only_keeps_existing_project(tmp_path):
         ".vscode/extensions.json",
         ".vscode/settings.json",
     }
+
+
+def test_tooling_update_preserves_project_hooks(tmp_path):
+    template = tmp_path / "template"
+    template.mkdir()
+    shutil.copy(ROOT / "copier.yml", template)
+    shutil.copytree(ROOT / "templates", template / "templates")
+    run(template, "git", "init", "-q")
+    run(template, "git", "add", ".")
+    commit = (
+        "git",
+        "-c",
+        "user.name=MOPK tests",
+        "-c",
+        "user.email=tests@example.invalid",
+        "-c",
+        "commit.gpgsign=false",
+        "-c",
+        "core.hooksPath=NUL",
+        "commit",
+        "-qm",
+    )
+    run(template, *commit, "Template")
+    consumer = tmp_path / "consumer"
+    run_copy(
+        str(template),
+        consumer,
+        vcs_ref="HEAD",
+        data={"tooling_only": True},
+        defaults=True,
+        quiet=True,
+    )
+    hooks_path = consumer / ".pre-commit-config.yaml"
+    hooks = yaml.safe_load(hooks_path.read_text())
+    hooks["repos"][0]["hooks"].append(
+        {
+            "id": "project-check",
+            "name": "Project check",
+            "entry": "check-project",
+            "language": "system",
+        }
+    )
+    hooks_path.write_text(yaml.safe_dump(hooks, sort_keys=False))
+    (consumer / "xmake.lua").write_text('set_project("Existing")\n')
+    run(consumer, "git", "init", "-q")
+    run(consumer, "git", "add", ".")
+    run(consumer, *commit, "Project customizations")
+    editor = template / "templates/.editorconfig"
+    editor.write_text(editor.read_text().replace("indent_size = 4", "indent_size = 8"))
+    run(template, "git", "add", ".")
+    run(template, *commit, "Update editor defaults")
+    run_update(consumer, vcs_ref="HEAD", defaults=True, overwrite=True, quiet=True)
+    updated_hooks = yaml.safe_load(hooks_path.read_text())
+    assert updated_hooks["repos"][0]["hooks"][-1]["id"] == "project-check"
+    assert "indent_size = 8" in (consumer / ".editorconfig").read_text()
+    assert (consumer / "xmake.lua").read_text() == 'set_project("Existing")\n'
+    assert not (consumer / "src/Plugin.cpp").exists()
