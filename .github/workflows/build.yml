@@ -36,7 +36,7 @@ permissions:
   contents: read
 
 env:
-  XMAKE_COMMIT: 7ec04bfc12726ff51d69c9efe69280bd163ce28d
+  XMAKE_COMMIT: 9c1ecaf411d668305e360a5563502f6dbc8f38d7
 
 jobs:
   checks:
@@ -112,19 +112,6 @@ jobs:
         with:
           xmake-version: gabriel-andreescu/xmake#sha@${{ env.XMAKE_COMMIT }}
           actions-cache-folder: .xmake-install
-
-      - name: Fix XMake MSVC precompiled header caching
-        run: |
-          xmake lua -c '
-            local file = path.join(os.programdir(), "modules/core/tools/cl.lua")
-            local source = io.readfile(file)
-            local old = "if objectfile:endswith(\".pch\") then"
-            local replacement = "if objectfile:endswith(\".pch\") or objectfile:endswith(\".pch.obj\") then"
-            if not source:find(replacement, 1, true) then
-              assert(source:find(old, 1, true), "Unexpected XMake MSVC PCH check")
-              local patched = source:replace(old, replacement, {plain = true})
-              io.writefile(file, patched)
-            end'
 
       - name: Set XMake cache directories
         id: image
