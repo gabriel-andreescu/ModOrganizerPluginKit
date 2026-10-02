@@ -25,6 +25,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Fixed
 
+- DevBench instance discovery skips records left by MO2 processes that no longer
+  run. Probing them could make a running MO2 miss the discovery timeout and be
+  reported as not running.
 - The DevBench pytest session turns off MO2's Missing Masters check while tests
   run and restores it afterwards. MO2 could crash with heap corruption when
   tests refreshed it repeatedly.
