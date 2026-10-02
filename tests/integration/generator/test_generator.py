@@ -108,3 +108,38 @@ def test_package_composition(tmp_path, mopk_addon):
     assert (tmp_path / "stable/output.txt").read_text() == "compiled"
     assert not (tmp_path / "stable/private.txt").exists()
     assert not (tmp_path / "beta").exists()
+
+
+def test_tooling_only_keeps_existing_project(tmp_path):
+    existing = {
+        "README.md": "# Existing project\n",
+        "xmake.lua": 'set_project("Existing")\n',
+        "src/Plugin.cpp": "existing source\n",
+    }
+    for name, contents in existing.items():
+        destination = tmp_path / name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(contents)
+    generate(tmp_path, tooling_only=True)
+    for name, contents in existing.items():
+        assert (tmp_path / name).read_text() == contents
+    generated = {
+        path.relative_to(tmp_path).as_posix()
+        for path in tmp_path.rglob("*")
+        if path.is_file()
+    } - existing.keys()
+    assert generated == {
+        ".clang-format",
+        ".clang-tidy",
+        ".clangd",
+        ".copier-answers.yml",
+        ".editorconfig",
+        ".gitattributes",
+        ".gitignore",
+        ".pre-commit-config.yaml",
+        ".prettierignore",
+        ".prettierrc.json",
+        ".stylua.toml",
+        ".vscode/extensions.json",
+        ".vscode/settings.json",
+    }

@@ -2,7 +2,9 @@
   "recommendations": [
     "tboox.xmake-vscode",
     "EditorConfig.EditorConfig",
+{% if not tooling_only %}
     "gabriel-andreescu.bbcode-editor",
+{% endif %}
 {% if devbench_tests %}
     "ms-python.python",
     "charliermarsh.ruff",

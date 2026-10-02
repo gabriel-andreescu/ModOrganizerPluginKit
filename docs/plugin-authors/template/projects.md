@@ -73,6 +73,9 @@ uibase and Qt.
 
 Pass answers with `-d name=value`, or use the interactive prompts.
 
+Set `tooling_only=true` to
+[configure an existing project's tools](#tooling-for-existing-projects).
+
 | Answer                               | Default     | Purpose                                                                                                                   |
 | ------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `project_name`                       | `my_plugin` | Project name, DLL basename and Qt plugin IID.                                                                             |
@@ -83,6 +86,22 @@ Pass answers with `-d name=value`, or use the interactive prompts.
 | `deploy_2_5_2`, `deploy_2_5_3beta12` | Empty       | Initial [deployment](../tooling/packaging.md#deployment) destinations for each release, separated by `;`. Stored locally. |
 
 Put source files in `src/`. MOPK writes build output to `build/`.
+
+## Tooling for existing projects
+
+Use the same template to add editor settings, formatter configuration and
+pre-commit hooks to an existing project:
+
+```powershell
+copier copy https://github.com/gabriel-andreescu/ModOrganizerPluginKit.git C:/path/to/ExistingProject -d tooling_only=true
+```
+
+This mode generates only tooling configuration and `.copier-answers.yml`.
+Sources, build files and documentation remain project-owned.
+
+Review existing configuration files during the first copy. Keep project-specific
+settings and hooks in those files. Later `copier update` runs merge template
+changes with those customizations.
 
 ## Updating
 
