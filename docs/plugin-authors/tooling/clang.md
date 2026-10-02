@@ -20,8 +20,14 @@ clang-format -i src/Plugin.cpp
 With LLVM on PATH, run from the project:
 
 ```powershell
-xmake check clang.tidy -f 'src/**.cpp'
+xmake check clang.tidy
 ```
 
-Adjust the file pattern to match your sources. Check each supported MO2 release
-when sources branch on `MOPK_MO2_VERSION`.
+This checks every source the plugin builds, in parallel. To check selected
+files, pass them with `-f`:
+
+```powershell
+xmake check clang.tidy -f src/Plugin.cpp
+```
+
+Check each supported MO2 release when sources branch on `MOPK_MO2_VERSION`.
