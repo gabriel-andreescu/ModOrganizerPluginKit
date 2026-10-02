@@ -44,7 +44,7 @@ Use the MO2 installation's `plugins/` directory. Use full target names,
 including namespaces. Paths are absolute or relative to the project root. Each
 release accepts multiple destinations.
 
-```sh
+```powershell
 xmake
 ```
 
@@ -68,7 +68,7 @@ previously deployed files or choose an empty destination before deploying again.
 
 ## ZIP packages
 
-```sh
+```powershell
 xmake package
 xmake package my_plugin
 ```

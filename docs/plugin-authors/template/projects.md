@@ -44,7 +44,7 @@ behavior.
 The generated `xmake.lua` registers MOPK and declares the plugin DLL and its
 package. From the project root:
 
-```sh
+```powershell
 xmake f -y
 xmake
 xmake package
@@ -107,7 +107,7 @@ changes with those customizations.
 
 Keep `.copier-answers.yml` in Git. From a clean working tree:
 
-```sh
+```powershell
 copier update
 ```
 

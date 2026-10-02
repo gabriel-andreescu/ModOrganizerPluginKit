@@ -28,7 +28,7 @@ Pre-commit formats staged files with:
 
 After initializing the project's Git repository, install the hooks with:
 
-```sh
+```powershell
 uv tool install pre-commit
 pre-commit install
 ```

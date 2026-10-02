@@ -40,7 +40,7 @@ and requires uibase for the selected MO2 release and Qt.
 
 ## Build and package
 
-```sh
+```powershell
 xmake
 xmake package
 ```

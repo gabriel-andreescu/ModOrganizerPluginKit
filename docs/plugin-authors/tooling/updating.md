@@ -27,7 +27,7 @@ version in `xmake-addons.lock` and keeps different versions side by side.
 To upgrade, update the repository recipes, change the `add_addons` version and
 configure again:
 
-```sh
+```powershell
 xmake repo --update
 xmake f -y
 xmake package
@@ -45,7 +45,7 @@ current declarations.
 MOPK recipes can change their pinned source without changing the version label.
 When adopting such a recipe change, reinstall the affected package, for example:
 
-```sh
+```powershell
 xmake require --upgrade -f -y mo2-uibase
 ```
 
