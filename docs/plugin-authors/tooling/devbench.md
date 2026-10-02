@@ -87,7 +87,7 @@ on a worker thread while a refresh rebuilds the plugin list, so suites that
 refresh MO2 repeatedly can crash it. If a run stops before the session ends,
 re-enable the check under Settings → Plugins.
 
-| Fixture            | Value                                                                                                                  |
+| Fixture            | Purpose                                                                                                                |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | `devbench`         | Client with a separate JSON transcript for each test.                                                                  |
 | `devbench_session` | Shared client for the test session.                                                                                    |

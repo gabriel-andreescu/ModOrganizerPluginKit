@@ -16,22 +16,27 @@ These integrations do not require Copier or its generated project layout.
 A complete `xmake.lua`:
 
 ```lua
+set_xmakever("3.1.1")
+set_project("my_plugin")
+set_policy("package.requires_lock", true)
+
 add_repositories("mopk https://github.com/gabriel-andreescu/ModOrganizerPluginKit.git")
 add_addons("mopk X.Y.Z")
 includes("@addon/mopk/project", "@addon/mopk/native")
-set_policy("package.requires_lock", true)
 
-target("Plugin")
+target("Plugin", function()
     set_default(false)
     set_basename("my_plugin")
     set_version("1.0.0")
     add_rules("@addon/mopk/plugin")
-    add_files("src/**.cpp", "src/**.h")
+    add_files("$(projectdir)/src/**.cpp", "$(projectdir)/src/**.h")
     add_packages("qt6base", "mo2-uibase")
+end)
 
-target("my_plugin")
+target("my_plugin", function()
     set_version("1.0.0")
-    add_rules("@addon/mopk/package", {targets = {"Plugin"}})
+    add_rules("@addon/mopk/package", { targets = { "Plugin" } })
+end)
 ```
 
 The root policy enables XMake's dependency lockfile. `project` declares the

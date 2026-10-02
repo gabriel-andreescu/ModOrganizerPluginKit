@@ -17,14 +17,11 @@ installs into `.xmake/luals`.
 
 Pre-commit formats staged files with:
 
-- **Prettier:** Markdown (`.md`), YAML (`.yaml`, `.yml`) and JSON (`.json`,
-  `.jsonc`), using [Prettier's defaults](https://prettier.io/docs/options) with
-  `proseWrap: "always"`.
-- **StyLua:** Lua (`.lua`), using four-space indentation.
-- **Ruff**, when Python is included: lint fixes and formatting for `.py` and
-  `.pyi` files. The lint configuration also enables import sorting.
-- **clang-format:** C and C++ sources using the template's pinned
-  [clang-format 23.1.0](../tooling/clang.md).
+- **Prettier:** Markdown, YAML and JSON, with `proseWrap: "always"`.
+- **StyLua:** Lua, using four-space indentation.
+- **Ruff**, when Python tests are included: lint fixes, import sorting and
+  formatting.
+- **clang-format:** C and C++ sources using clang-format 23.1.0.
 
 After initializing the project's Git repository, install the hooks with:
 
@@ -60,8 +57,9 @@ selecting an MO2 instance and running the suite.
 to the plugin's dependencies. Both options are independent and can be added
 through a Copier update.
 
-## GitHub Actions
+## CI workflow
 
-The generated workflow calls MOPK's
-[reusable build workflow](../tooling/github-actions.md) on pushes to `main`,
-pull requests and manual runs. Version tags also publish a GitHub release.
+`.github/workflows/build.yml` calls MOPK's
+[build workflow](../tooling/github-actions.md) at the project's MOPK release. It
+runs on pushes to `main`, pull requests and manual runs. Version tags also
+publish a GitHub release.
