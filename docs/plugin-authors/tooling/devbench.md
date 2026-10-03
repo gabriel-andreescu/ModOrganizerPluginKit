@@ -178,7 +178,7 @@ With [MOPK configured](building.md), add the DevBench API package to the plugin
 target:
 
 ```lua
-add_requires("devbench-api 0.1.0", {system = false})
+add_requires("devbench-api X.Y.Z", {system = false})
 
 target("Plugin")
     add_packages("devbench-api")
