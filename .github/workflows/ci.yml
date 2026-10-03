@@ -20,7 +20,7 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      plugins: ${{ steps.filter.outputs.plugins }}
+      native: ${{ steps.filter.outputs.native }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -33,12 +33,15 @@ jobs:
           # Pushes compare with the branch's previous commit instead of the default branch.
           base: ${{ github.ref }}
           filters: |
-            plugins:
+            native:
               - 'addons/**'
+              - 'addon.lua'
               - 'packages/**'
-              - 'xmake/**'
               - 'templates/xmake.lua.jinja'
               - 'templates/src/**'
+              - 'tests/native/**'
+              - 'tests/{conftest,support}.py'
+              - 'xmake/**'
               - 'copier.yml'
               - 'pyproject.toml'
               - 'uv.lock'
@@ -130,13 +133,14 @@ jobs:
       - name: Check generated projects' formatting
         run: |
           $PSNativeCommandUseErrorActionPreference = $true
+          $description = "A sample plugin whose description is long enough to wrap in the generated README file."
           $variants = @{
-              plugin = @("-d", "project_name=sample_plugin", "-d", "devbench_tests=true", "-d", "devbench_api=true")
+              plugin = @("-d", "devbench_tests=true", "-d", "devbench_api=true")
               tooling = @("-d", "tooling_only=true")
           }
           foreach ($variant in $variants.GetEnumerator()) {
               $project = Join-Path $env:RUNNER_TEMP $variant.Key
-              uv run copier copy --defaults --trust --vcs-ref HEAD @($variant.Value) $env:GITHUB_WORKSPACE $project
+              uv run copier copy --defaults --trust --vcs-ref HEAD -d project_name=sample_plugin -d "description=$description" @($variant.Value) $env:GITHUB_WORKSPACE $project
               Push-Location $project
               git init --quiet
               git add --all
@@ -151,6 +155,9 @@ jobs:
         run:
           uv run pytest tests/integration -n 4
           --junitxml=build/integration-results.xml
+
+      - name: Build Python distributions
+        run: uv build --package modorganizer-plugin-kit
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
@@ -176,12 +183,8 @@ jobs:
     needs: changes
     if:
       github.event_name == 'workflow_dispatch' || github.ref_type == 'tag' ||
-      needs.changes.outputs.plugins == 'true'
+      needs.changes.outputs.native == 'true'
     runs-on: windows-2025
-    strategy:
-      fail-fast: false
-      matrix:
-        mo2: ["2.5.2", "2.5.3beta12"]
     defaults:
       run:
         shell: pwsh
@@ -203,65 +206,42 @@ jobs:
           xmake-version: gabriel-andreescu/xmake#sha@${{ env.XMAKE_COMMIT }}
           actions-cache-folder: .xmake-install
 
-      - name: Set XMake cache directories
+      - name: Set XMake cache directory
         id: image
         run: |
           "version=$env:ImageVersion" >> $env:GITHUB_OUTPUT
-          "XMAKE_GLOBALDIR=$env:RUNNER_TEMP/mopk/global" >> $env:GITHUB_ENV
-          "XMAKE_PKG_INSTALLDIR=$env:RUNNER_TEMP/mopk/packages" >> $env:GITHUB_ENV
-          "XMAKE_PKG_CACHEDIR=$env:RUNNER_TEMP/mopk/downloads" >> $env:GITHUB_ENV
+          "MOPK_TEST_CACHE=$env:RUNNER_TEMP/mopk/tests" >> $env:GITHUB_ENV
+
+      - name: Cache XMake repositories and downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ env.MOPK_TEST_CACHE }}/*/global
+            ${{ env.MOPK_TEST_CACHE }}/*/downloads
+          key:
+            xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-native-downloads-${{
+            github.sha }}
+          restore-keys:
+            xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-native-downloads-
 
       - name: Cache installed dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: |
-            ${{ runner.temp }}/mopk/packages
-            ${{ runner.temp }}/mopk/downloads
+          path: ${{ env.MOPK_TEST_CACHE }}/*/packages
           key:
-            xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-plugins-${{
-            steps.image.outputs.version }}-mo2-${{ matrix.mo2 }}-${{
-            hashFiles('packages/**', 'xmake/includes/**') }}
+            xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-native-${{
+            steps.image.outputs.version }}-${{ hashFiles('packages/**') }}-${{
+            github.sha }}
+          restore-keys:
+            xmake-${{ env.XMAKE_COMMIT }}-${{ runner.os }}-native-${{
+            steps.image.outputs.version }}-${{ hashFiles('packages/**') }}-
 
       - run: uv sync --locked
 
-      - name: Build and package a generated plugin
+      - name: Build and inspect plugin packages
         env:
-          MOPK_MO2_RELEASE: ${{ matrix.mo2 }}
-        run: |
-          $PSNativeCommandUseErrorActionPreference = $true
-          $kit = $PWD.Path.Replace('\', '/')
-          xmake repo --add --global mopk $kit
-          $version = uv run python -c 'import yaml; print(yaml.safe_load(open("copier.yml"))["mopk_version"]["default"])'
-          xrepo install --addon -y --debugdir=$kit "mopk $version"
-          $project = Join-Path $env:RUNNER_TEMP "sample_plugin"
-          uv run copier copy --defaults --trust --vcs-ref HEAD -d project_name=sample_plugin $kit $project
-          Set-Location $project
-          xmake repo --add mopk $kit
-          xmake f -y -a x64 --toolchain=msvc --mo2="$env:MOPK_MO2_RELEASE"
-          xmake -y
-          xmake package -y
-          $zip = "build/dist/sample_plugin/sample_plugin-0.1.0-MO2-$env:MOPK_MO2_RELEASE.zip"
-          $entries = @(tar -tf $zip)
-          if (($entries -join ',') -cne 'sample_plugin.dll,sample_plugin.pdb') {
-              throw "Unexpected package contents: $($entries -join ', ')"
-          }
-          $payload = Join-Path $env:RUNNER_TEMP "payload"
-          Expand-Archive $zip $payload
-          "MOPK_PLUGIN_DLL=$(Join-Path $payload 'sample_plugin.dll')" >> $env:GITHUB_ENV
-
-      - name: Check the plugin's Qt entry point
-        run: |
-          $PSNativeCommandUseErrorActionPreference = $true
-          $dumpbin = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -find 'VC/Tools/MSVC/**/bin/Hostx64/x64/dumpbin.exe' | Select-Object -First 1
-          if (-not $dumpbin) { throw 'dumpbin.exe not found.' }
-          if (-not (& $dumpbin /nologo /exports $env:MOPK_PLUGIN_DLL | Select-String -SimpleMatch ' qt_plugin_instance')) {
-              throw 'The plugin does not export qt_plugin_instance.'
-          }
-          $bytes = [IO.File]::ReadAllBytes($env:MOPK_PLUGIN_DLL)
-          $offset = [Text.Encoding]::Latin1.GetString($bytes).IndexOf('QTMETADATA !', [StringComparison]::Ordinal)
-          if ($offset -lt 0) { throw 'The plugin has no Qt metadata.' }
-          # Qt's header follows the magic: version, Qt major, Qt minor, then architecture flags with 0x80 for debug builds.
-          if ($bytes[$offset + 15] -band 0x80) { throw 'The plugin metadata declares a debug build, which MO2 rejects.' }
+          MOPK_TEST_NATIVE_PLUGINS: "1"
+        run: uv run pytest tests/native/test_plugins.py
 
   release:
     if: github.event_name == 'push' && github.ref_type == 'tag'

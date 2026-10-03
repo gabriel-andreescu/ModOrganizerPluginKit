@@ -51,7 +51,7 @@ it.
 
 Each build targets one MO2 release, `2.5.2` by default:
 
-```sh
+```powershell
 xmake f --mo2=2.5.3beta12
 ```
 

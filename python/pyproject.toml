@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "modorganizer-plugin-kit"
-version = "0.2.0"
+version = "0.2.1"
 description = "Development helpers for Mod Organizer 2 plugins"
 license = "MIT"
 license-files = ["LICENSE"]

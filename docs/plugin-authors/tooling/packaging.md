@@ -44,10 +44,6 @@ Use the MO2 installation's `plugins/` directory. Use full target names,
 including namespaces. Paths are absolute or relative to the project root. Each
 release accepts multiple destinations.
 
-```sh
-xmake
-```
-
 Building a package prepares its current files and deploys them to the
 destinations of the configured MO2 release. Targets or releases without
 destinations are not deployed. Disable deployment with `xmake f --deploy=n`.
@@ -58,17 +54,15 @@ sharing a destination must have non-overlapping output paths. Conflicts with
 another package or unowned files fail before deployment changes its
 destinations.
 
-Ownership records live in the ignored `.mopk/deployment.lua`, independently of
-XMake's cache. After deleting `.xmake/`, restore `deploy.json` to resume
-deployment to the same destinations.
-
-Removing a destination leaves its deployed files in place. Keep `.mopk/` while
-those files are deployed. If ownership records are lost, remove this project's
-previously deployed files or choose an empty destination before deploying again.
+Ownership records live in `.mopk/deployment.lua`, independently of XMake's
+cache. After removing `.xmake/`, restore `deploy.json` to resume deployment.
+Removing a destination leaves its files in place. Keep `.mopk/` while its
+outputs are deployed. If ownership records are lost, remove the project's
+previously deployed files or choose an empty destination.
 
 ## ZIP packages
 
-```sh
+```powershell
 xmake package
 xmake package my_plugin
 ```

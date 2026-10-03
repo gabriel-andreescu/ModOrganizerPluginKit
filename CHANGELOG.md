@@ -6,11 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-03
+
+### Changed
+
+- The `devbench-api` package installs DevBench's release archive, verified by
+  checksum, instead of cloning its repository.
+
 ## [0.2.0] - 2026-10-02
 
 ### Added
 
-- Generate only tooling configuration for an existing project with
+- The template generates only tooling configuration for an existing project with
   `tooling_only=true`.
 - The build workflow installs npm dependencies for each committed
   `package-lock.json` before it runs pre-commit hooks.

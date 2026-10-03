@@ -7,11 +7,14 @@
 | MOPK and xmake-luals addons | Change the `add_addons` version, then configure                              | `xmake.lua` and `xmake-addons.lock`.           |
 | XMake dependencies          | `xmake require --upgrade`                                                    | `xmake-requires.lock`.                         |
 | Python helpers              | `uv lock --upgrade-package modorganizer-plugin-kit`, then `uv sync --locked` | `uv.lock`.                                     |
-| GitHub build workflow       | Change the `uses` release tag in the caller                                  | `.github/workflows/build.yml`.                 |
+| Build workflow              | Change the `uses` release tag in the caller                                  | `.github/workflows/build.yml`.                 |
 
 Keep `.copier-answers.yml`, `xmake-requires.lock`, `xmake-addons.lock` and
 `uv.lock` in Git when the project uses them. Copier merges project files. It
 does not reinstall build tools or update Python's environment.
+
+The same update command applies to tooling-only projects. Copier merges shared
+configuration changes with project-specific settings and hooks.
 
 ## MOPK addon
 
@@ -27,11 +30,17 @@ version in `xmake-addons.lock` and keeps different versions side by side.
 To upgrade, update the repository recipes, change the `add_addons` version and
 configure again:
 
-```sh
+```powershell
 xmake repo --update
 xmake f -y
 xmake package
 ```
+
+For a version range, `xmake addon --upgrade` resolves it again and updates the
+lockfile. An exact version remains fixed until its declaration changes.
+
+To build against a local MOPK checkout, follow the
+[consumer setup](../../../CONTRIBUTING.md#validate-rule-and-package-changes).
 
 MOPK releases select the supported MO2 releases, their uibase packages and the
 Qt version. A release that drops an MO2 release no longer accepts it in `--mo2`.
@@ -45,7 +54,7 @@ current declarations.
 MOPK recipes can change their pinned source without changing the version label.
 When adopting such a recipe change, reinstall the affected package, for example:
 
-```sh
+```powershell
 xmake require --upgrade -f -y mo2-uibase
 ```
 

@@ -16,14 +16,14 @@ MO2 loads the plugin.
 
 ## Library sources
 
-| Dependency         | Source used by MOPK                                                                                                                                       | MOPK changes                                               |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| uibase 2.5.2       | MO2's `Mod.Organizer-2.5.2-uibase.7z` release asset, pinned in [the recipe](../../../packages/m/mo2-uibase/xmake.lua)                                     | `include/uibase/game_features` include path.               |
-| uibase 2.5.3beta12 | The beta's source archive and `uibase.dll`, stored in [the recipe directory](../../../packages/m/mo2-uibase/2.5.3beta12)                                  | Missing `formatters/qt.h` include added to `versioning.h`. |
-| Qt                 | [xmake-repo](https://github.com/xmake-io/xmake-repo)'s `qt6base` binaries, installed through aqtinstall                                                   | None.                                                      |
-| libbsarch          | [ModOrganizer2/libbsarch](https://github.com/ModOrganizer2/libbsarch)'s release, pinned in [the recipe](../../../packages/m/mo2-libbsarch/xmake.lua)      | Headers and import libraries only.                         |
-| DevBench API       | [DevBench](https://github.com/gabriel-andreescu/modorganizer-dev_bench)'s release tag, pinned in [the recipe](../../../packages/d/devbench-api/xmake.lua) | Packages the MIT API headers and companion source.         |
-| DDS header         | DirectXTex's `DDS.h`, pinned in [the recipe](../../../packages/m/mo2-dds-header/xmake.lua)                                                                | Header installed unchanged.                                |
+| Dependency         | Source used by MOPK                                                                                                                                                                  | MOPK changes                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| uibase 2.5.2       | MO2's `Mod.Organizer-2.5.2-uibase.7z` release asset, pinned in [the recipe](../../../packages/m/mo2-uibase/xmake.lua)                                                                | `include/uibase/game_features` include path.               |
+| uibase 2.5.3beta12 | The beta's source archive and `uibase.dll`, stored in [the recipe directory](../../../packages/m/mo2-uibase/2.5.3beta12)                                                             | Missing `formatters/qt.h` include added to `versioning.h`. |
+| Qt                 | [xmake-repo](https://github.com/xmake-io/xmake-repo)'s `qt6base` binaries, installed through aqtinstall                                                                              | None.                                                      |
+| libbsarch          | [ModOrganizer2/libbsarch](https://github.com/ModOrganizer2/libbsarch)'s release, pinned in [the recipe](../../../packages/m/mo2-libbsarch/xmake.lua)                                 | Headers and import libraries only.                         |
+| DevBench API       | [DevBench](https://github.com/gabriel-andreescu/modorganizer-dev_bench)'s release archive, pinned by commit and checksum in [the recipe](../../../packages/d/devbench-api/xmake.lua) | Packages the MIT API headers and companion source.         |
+| DDS header         | DirectXTex's `DDS.h`, pinned in [the recipe](../../../packages/m/mo2-dds-header/xmake.lua)                                                                                           | Header installed unchanged.                                |
 
 Include uibase headers through their directory, for example
 `#include <uibase/iplugin.h>`. The headers keep their LGPL-3.0 notices.

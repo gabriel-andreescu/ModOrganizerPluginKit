@@ -4,8 +4,8 @@ Copier creates an MO2 plugin project.
 
 ## First build
 
-Requires Copier, Git, XMake 3.1.1 or newer and Windows with an MSVC C++23
-toolchain and Windows SDK.
+Requires Git, Copier 9, XMake 3.1.1 or newer and Visual Studio 2022 with the C++
+toolset and Windows SDK.
 
 ```powershell
 copier copy --defaults -d project_name=my_plugin https://github.com/gabriel-andreescu/ModOrganizerPluginKit.git my_plugin
@@ -44,7 +44,7 @@ behavior.
 The generated `xmake.lua` registers MOPK and declares the plugin DLL and its
 package. From the project root:
 
-```sh
+```powershell
 xmake f -y
 xmake
 xmake package
@@ -85,7 +85,7 @@ Set `tooling_only=true` to
 | `devbench_api`                       | `false`     | Include the [DevBench native API](../tooling/devbench.md#native-api).                                                     |
 | `deploy_2_5_2`, `deploy_2_5_3beta12` | Empty       | Initial [deployment](../tooling/packaging.md#deployment) destinations for each release, separated by `;`. Stored locally. |
 
-Put source files in `src/`. MOPK writes build output to `build/`.
+Put source files in `src/`.
 
 ## Tooling for existing projects
 
@@ -107,7 +107,7 @@ changes with those customizations.
 
 Keep `.copier-answers.yml` in Git. From a clean working tree:
 
-```sh
+```powershell
 copier update
 ```
 

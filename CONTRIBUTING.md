@@ -1,7 +1,7 @@
 # Contributing
 
-See [Development](docs/maintainers/development.md) for the environment,
-formatting and checks.
+See [Development](docs/maintainers/development.md) for the Python environment,
+formatting and tests.
 
 ## Repository layout
 
@@ -24,7 +24,8 @@ lists the supported releases. Its first entry is the default. Keep that list,
 the uibase requires in
 [`xmake/includes/native`](xmake/includes/native/xmake.lua), the `mo2-releases`
 default in the [build workflow](.github/workflows/build.yml), the
-[CI](.github/workflows/ci.yml) matrix and the documentation aligned.
+[native plugin test](tests/native/test_plugins.py) and the documentation
+aligned.
 
 Plugins build against the Qt shipped by the oldest supported release. Qt loads
 plugins built against an older minor version. Raise the `qt6base` version when
@@ -86,12 +87,13 @@ xmake
 xmake package
 ```
 
-The source override installs uncommitted code under the requested version, so it
-belongs in an isolated development cache. The project's repository takes
-precedence over the one in `xmake.lua`, so recipes also come from the checkout.
-Disabling the requires lock keeps `xmake-requires.lock` from pinning or
-recording it. Reinstall the addon after rule changes, and a package after recipe
-changes with `xmake require -f -y <package>`.
+Keep that global directory for the development session. The source override
+installs uncommitted code under the requested version, so it belongs in an
+isolated development cache. The project's repository takes precedence over the
+one in `xmake.lua`, so recipes also come from the checkout. Disabling the
+requires lock keeps `xmake-requires.lock` from pinning or recording it.
+Reinstall the addon after rule changes, and a package after recipe changes with
+`xmake require -f -y <package>`.
 
 XMake records the checkout in `xmake-addons.lock` when the lock has no entry for
 the requested version. Don't commit that lock. Once the version is released,
@@ -115,10 +117,11 @@ a newer Qt minor version than it ships.
 Unreleased work lands on `dev`. `main` tracks the latest release.
 
 [CI](.github/workflows/ci.yml) runs the development checks and tests, and the
-formatting checks on a generated project. When the addon, packages, template or
-CI change, and on tags or manual runs, it builds a generated plugin for every
-supported release and checks its Qt entry point and release metadata. CI cannot
-load the plugin in MO2.
+formatting checks on a generated project. When the addon, packages, template,
+build rules or native test setup change, and on tags or manual runs, it runs the
+[native tests](docs/maintainers/development.md#native-tests), which build a
+generated plugin for every supported release and check its Qt metadata. CI
+cannot load the plugin in MO2.
 
 Keep the XMake version in the CI and consumer workflows aligned with
 [the development setup](docs/maintainers/development.md#xmake).
