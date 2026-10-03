@@ -37,6 +37,11 @@ Update source revisions, package versions and archive hashes together. Review
 adaptations against the new source before retaining them. Preserve upstream
 license and exception files in the installed package.
 
+After changing the `devbench-api` recipe, install it from the pinned revision
+and from a
+[local DevBench checkout](docs/plugin-authors/tooling/devbench.md#local-devbench-builds),
+and check that the checkout's `git status` is clean afterwards.
+
 ### uibase
 
 The [package definition](packages/m/mo2-uibase/xmake.lua) installs a release's
