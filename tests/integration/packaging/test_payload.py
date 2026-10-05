@@ -1,4 +1,5 @@
 import os
+import time
 
 
 def test_payload_follows_input_changes(payload_module):
@@ -8,8 +9,8 @@ def test_payload_follows_input_changes(payload_module):
     payload = invoke()
     assert (payload / "plugin.dll").read_bytes() == b"original"
 
-    # XMake compares modification times in whole seconds.
-    changed = plugin.stat().st_mtime + 2
+    # XMake rebuilds inputs newer than its last build, in whole seconds.
+    changed = time.time() + 2
     plugin.write_bytes(b"modified")
     os.utime(plugin, (changed, changed))
     assert (invoke() / "plugin.dll").read_bytes() == b"modified"
