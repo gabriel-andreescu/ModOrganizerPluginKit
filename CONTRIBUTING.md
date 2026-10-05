@@ -34,8 +34,9 @@ that release is dropped.
 ## Package maintenance
 
 Update source revisions, package versions and archive hashes together. Review
-adaptations against the new source before retaining them. Preserve upstream
-license and exception files in the installed package.
+adaptations against the new source before retaining them. Recipes install only
+what builds use, so they don't copy dependency license files into the installed
+package.
 
 After changing the `devbench-api` recipe, install it from the pinned revision
 and from a
