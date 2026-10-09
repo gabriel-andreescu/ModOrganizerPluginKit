@@ -7,7 +7,8 @@
     'Lua.format.enable': false,
     'xmake.autoGenerateCompileCommands': 'disabled',
     'files.watcherExclude': {'**/.xmake/**': true, '**/build/**': true, '**/dist/**': true},
-    'search.exclude': {'**/.xmake/**': true, '**/build/**': true, '**/dist/**': true}
+    'search.exclude': {'**/.xmake/**': true, '**/build/**': true, '**/dist/**': true},
+    'python.analysis.exclude': ['**/node_modules', '**/__pycache__', '**/.*', '**/build', '**/dist']
 } %}
 {% if devbench_tests %}
 {% set _ = settings.update({
