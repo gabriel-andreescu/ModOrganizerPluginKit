@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-21
+
+### Changed
+
+- The build workflow pins a newer XMake.
+- The `devbench-api` package no longer copies DevBench's license file into the
+  installed package.
+
+### Fixed
+
+- The build workflow builds XMake on Windows runners that ship Visual
+  Studio 2026.
+- Generated VS Code settings keep build output and dot-directories out of
+  Pylance analysis.
+
 ## [0.2.1] - 2026-10-03
 
 ### Changed
