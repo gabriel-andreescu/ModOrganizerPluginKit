@@ -25,13 +25,16 @@ MO2 loads the plugin.
 | DevBench API       | [DevBench](https://github.com/gabriel-andreescu/modorganizer-dev_bench)'s release archive, pinned by commit and checksum in [the recipe](../../../packages/d/devbench-api/xmake.lua) | Packages the MIT API headers and companion source.         |
 | DDS header         | DirectXTex's `DDS.h`, pinned in [the recipe](../../../packages/m/mo2-dds-header/xmake.lua)                                                                                           | Header installed unchanged.                                |
 
+Projects select a package version in `add_requires`. These pages write it as
+`X.Y.Z`. The recipes and a generated `xmake.lua` have the current ones.
+
 Include uibase headers through their directory, for example
 `#include <uibase/iplugin.h>`. The headers keep their LGPL-3.0 notices.
 
 Plugins that read Bethesda archives require libbsarch. MO2 ships its DLL:
 
 ```lua
-add_requires("mo2-libbsarch 0.1.2", {system = false})
+add_requires("mo2-libbsarch X.Y.Z", {system = false})
 
 target("Plugin")
     add_packages("qt6base", "mo2-uibase", "mo2-libbsarch")

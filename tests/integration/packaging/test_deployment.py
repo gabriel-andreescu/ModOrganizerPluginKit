@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import subprocess
+import time
 
 import pytest
 from tests.support import deployment_config, locked_file, run
@@ -25,9 +26,9 @@ def test_deploys_current_assets(tmp_path, module_project, module_command):
         assert (destination / "data/fixture.txt").read_text() == "original"
         (destination / "retained.txt").write_text("keep")
 
-    # XMake compares modification times in whole seconds.
+    # XMake rebuilds inputs newer than its last build, in whole seconds.
     fixture = assets / "data/fixture.txt"
-    changed = fixture.stat().st_mtime + 2
+    changed = time.time() + 2
     fixture.write_text("changed")
     os.utime(fixture, (changed, changed))
     run(project, *module_command("deploy"))

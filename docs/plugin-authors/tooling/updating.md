@@ -52,11 +52,10 @@ repository revisions. `xmake require --upgrade` resolves within the project's
 current declarations.
 
 MOPK recipes can change their pinned source without changing the version label.
-When adopting such a recipe change, reinstall the affected package, for example:
-
-```powershell
-xmake require --upgrade -f -y mo2-uibase
-```
+To adopt such a recipe change, run `xmake require --upgrade`. It loads the
+current recipes and records their revisions in the lock. To build against a
+local DevBench checkout, see
+[local DevBench builds](devbench.md#local-devbench-builds).
 
 Review the lockfile changes and rebuild each MO2 release before publishing the
 plugin.

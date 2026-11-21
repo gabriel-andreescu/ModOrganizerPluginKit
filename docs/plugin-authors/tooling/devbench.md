@@ -178,7 +178,7 @@ With [MOPK configured](building.md), add the DevBench API package to the plugin
 target:
 
 ```lua
-add_requires("devbench-api 0.1.0", {system = false})
+add_requires("devbench-api X.Y.Z", {system = false})
 
 target("Plugin")
     add_packages("devbench-api")
@@ -192,3 +192,25 @@ into the target.
 For interface acquisition, tool registration, capture providers and the Qt
 adapter, see DevBench's
 [extension API](https://github.com/gabriel-andreescu/modorganizer-dev_bench/blob/main/docs/plugin-authors/extensions.md).
+
+### Local DevBench builds
+
+To build against a local DevBench checkout, reinstall the API package from it
+with the requires lock disabled. With the lock enabled, reinstalling one package
+rewrites `xmake-requires.lock` down to that package:
+
+```powershell
+xmake f -y --policies=package.requires_lock:n
+xmake require -f -y --debugdir=C:/path/to/modorganizer-dev_bench "devbench-api X.Y.Z"
+xmake
+```
+
+Use the version the project's `xmake.lua` requires. The package copies the API
+files and leaves the checkout unchanged.
+
+To return to the pinned source, reinstall the package, then enable the lock:
+
+```powershell
+xmake require -f -y "devbench-api X.Y.Z"
+xmake f -y --policies=package.requires_lock:y
+```
